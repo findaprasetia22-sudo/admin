@@ -26,7 +26,7 @@
       padding: 20px 15px;
     }
 
-    .container { max-width: 1000px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 25px; padding: 10px 0; }
     header h1 { font-size: 24px; letter-spacing: 1px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -50,11 +50,28 @@
       text-transform: uppercase;
     }
 
+    /* Filter Responsive Layout */
+    .filter-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
     label { font-size: 13px; font-weight: 600; color: #718096; display: block; margin-bottom: 5px; }
-    input { width: 100%; padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; background-color: var(--gray-light); outline: none; }
+    input[type="month"], input[type="date"], select { 
+      width: 100%; 
+      padding: 12px 15px; 
+      border: 1.5px solid #e2e8f0; 
+      border-radius: 10px; 
+      font-size: 15px; 
+      background-color: var(--gray-light); 
+      outline: none; 
+      color: var(--text-dark);
+    }
 
     /* Stats Layout */
-    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; margin-bottom: 20px; }
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .stat-card { background: var(--gray-light); padding: 15px 10px; border-radius: 10px; text-align: center; border-left: 5px solid #821c1c; }
     .stat-card.info { border-left-color: var(--info); }
     .stat-card.warning { border-left-color: var(--warning); }
@@ -66,18 +83,37 @@
     .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; border: 1px solid #e2e8f0; border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background-color: #821c1c; color: white; padding: 12px 10px; font-weight: 600; text-align: left; white-space: nowrap; }
-    td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; color: var(--text-dark); }
+    td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; color: var(--text-dark); vertical-align: middle; }
     tr:nth-child(even) { background-color: #f7fafc; }
     .text-center { text-align: center; }
 
-    .btn-link { background: none; border: none; color: #3182ce; text-decoration: underline; cursor: pointer; font-size: 12px; font-weight: 600; width: auto; margin: 0; padding: 2px; }
+    /* Preview Foto Selfie Mini */
+    .img-preview {
+      width: 65px;
+      height: 65px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      background-color: #e2e8f0;
+    }
+    .img-preview:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .no-img {
+      font-size: 11px;
+      color: #a0aec0;
+      font-style: italic;
+    }
     
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 16px; }
   </style>
 </head>
 <body>
 
-  <div class="loading-overlay" id="loading">Mengekstrak data rekapitulasi dari server master...</div>
+  <div class="loading-overlay" id="loading">Memuat sinkronisasi database rekapitulasi...</div>
 
   <div class="container">
     <header>
@@ -85,14 +121,32 @@
       <p>Sistem Pemantauan Absensi Utama Pegawai Struktural</p>
     </header>
 
-    <!-- UTAMA: MASTER REPORT HUB PANEL DIRECT ACCESS -->
     <div class="card">
       <h3>Visualisasi Laporan Rekapitulasi</h3>
       <br>
-      <label for="adminFilterBulan">Pilih Periode Bulan Laporan</label>
-      <input type="month" id="adminFilterBulan" onchange="loadDashboardAdmin()">
 
-      <!-- Scorecard Summary Cards -->
+      <!-- Panel Kontrol Filter Ganda (By Month & By Date) -->
+      <div class="filter-group">
+        <div>
+          <label for="filterType">Metode Penyaringan Data</label>
+          <select id="filterType" onchange="toggleFilterInputs()">
+            <option value="month">Berdasarkan Bulan (By Month)</option>
+            <option value="date">Berdasarkan Tanggal (By Date)</option>
+          </select>
+        </div>
+        
+        <div id="boxFilterBulan">
+          <label for="adminFilterBulan">Pilih Bulan & Tahun</label>
+          <input type="month" id="adminFilterBulan" onchange="loadDashboardAdmin()">
+        </div>
+
+        <div id="boxFilterTanggal" style="display: none;">
+          <label for="adminFilterTanggal">Pilih Tanggal Spesifik</label>
+          <input type="date" id="adminFilterTanggal" onchange="loadDashboardAdmin()">
+        </div>
+      </div>
+
+      <!-- Scorecard Indikator Ringkasan Kinerja -->
       <div class="stats-container">
         <div class="stat-card info">
           <p>Total Log Presensi</p>
@@ -112,7 +166,7 @@
         </div>
       </div>
 
-      <!-- Master Data Table -->
+      <!-- Format Tampilan Laporan Sesuai Permintaan -->
       <div class="table-responsive">
         <table>
           <thead>
@@ -123,12 +177,12 @@
               <th class="text-center">Masuk</th>
               <th class="text-center">Pulang</th>
               <th>Keterlambatan</th>
-              <th>Rincian Agenda Kerja & Lokasi</th>
-              <th>Berkas Bukti</th>
+              <th class="text-center">Preview Foto Masuk</th>
+              <th class="text-center">Preview Foto Pulang</th>
             </tr>
           </thead>
           <tbody id="tabelAdminBody">
-            <tr><td colspan="8" class="text-center" style="color: #a0aec0; padding: 20px;">Memuat rekapitulasi...</td></tr>
+            <tr><td colspan="8" class="text-center" style="color: #a0aec0; padding: 20px;">Memuat rekapitulasi data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -141,66 +195,112 @@
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
-    // Otomatis dipanggil saat halaman diakses
+    // Toggle visibilitas input filter
+    function toggleFilterInputs() {
+      const type = document.getElementById("filterType").value;
+      if (type === "month") {
+        document.getElementById("boxFilterBulan").style.display = "block";
+        document.getElementById("boxFilterTanggal").style.display = "none";
+      } else {
+        document.getElementById("boxFilterBulan").style.display = "none";
+        document.getElementById("boxFilterTanggal").style.display = "block";
+      }
+      loadDashboardAdmin();
+    }
+
+    // Set nilai default saat halaman dimuat pertama kali (Bulan berjalan)
     function initDashboard() {
       const kini = new Date();
       const bln = String(kini.getMonth() + 1).padStart(2, '0');
+      const tgl = String(kini.getDate()).padStart(2, '0');
+      
       document.getElementById("adminFilterBulan").value = `${kini.getFullYear()}-${bln}`;
+      document.getElementById("adminFilterTanggal").value = `${kini.getFullYear()}-${bln}-${tgl}`;
+      
       loadDashboardAdmin();
     }
 
     async function loadDashboardAdmin() {
-      const bulan = document.getElementById("adminFilterBulan").value;
-      if(!bulan) return;
+      const filterType = document.getElementById("filterType").value;
+      let targetBulan = "";
+      let targetTanggal = "";
+
+      if (filterType === "month") {
+        targetBulan = document.getElementById("adminFilterBulan").value;
+        if(!targetBulan) return;
+      } else {
+        targetTanggal = document.getElementById("adminFilterTanggal").value;
+        if(!targetTanggal) return;
+        // Konversi format YYYY-MM-DD dari input date menjadi YYYY-MM untuk ditarik backend terlebih dahulu
+        const parts = targetTanggal.split("-");
+        targetBulan = parts[0] + "-" + parts[1];
+      }
 
       showLoading(true);
       const tbody = document.getElementById("tabelAdminBody");
       tbody.innerHTML = `<tr><td colspan="8" class="text-center">Sinkronisasi data master laporan...</td></tr>`;
 
       try {
-        const res = await fetch(`${API}?mode=admin_dashboard&bulan=${bulan}`);
+        // Ambil data satu bulan penuh dari backend agar penarikan fleksibel
+        const res = await fetch(`${API}?mode=admin_dashboard&bulan=${targetBulan}`);
         const data = await res.json();
 
         if (data.result === "success") {
           tbody.innerHTML = "";
-          let wfo = 0, luar = 0, telat = 0;
+          let wfo = 0, luar = 0, telat = 0, totalRow = 0;
 
-          if (data.data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:var(--danger)">Tidak ditemukan data absensi pada periode bulan ini.</td></tr>`;
+          // Filter lanjutan di sisi client jika user memilih metode 'by date'
+          let filteredData = data.data;
+          if (filterType === "date") {
+            const parts = targetTanggal.split("-");
+            // Formulasi penyesuaian berbagai kemungkinan variasi teks penulisan tanggal di sheet
+            const format1 = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/MM/yyyy
+            const format2 = `${parts[2]}/${parts[1]}/${parts[0].substring(2)}`; // dd/MM/yy
+            const format3 = targetTanggal; // yyyy-MM-dd
+
+            filteredData = data.data.filter(item => {
+              const tglStr = item.tanggal.trim();
+              return tglStr === format1 || tglStr === format2 || tglStr === format3;
+            });
+          }
+
+          if (filteredData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:var(--danger)">Tidak ditemukan log data absensi pegawai pada periode ini.</td></tr>`;
             updateStats(0,0,0,0); return;
           }
 
-          data.data.forEach(item => {
+          filteredData.forEach(item => {
+            totalRow++;
             if(item.jenis === "WFO") wfo++; else luar++;
             if(item.terlambat !== "0") telat++;
 
-            let linkFoto = "-";
-            if(item.fotoMasuk || item.fotoPulang) {
-              let fMasuk = item.fotoMasuk ? `<button class="btn-link" onclick="window.open('${item.fotoMasuk}', '_blank')">Masuk</button>` : '';
-              let fPulang = item.fotoPulang ? `<button class="btn-link" onclick="window.open('${item.fotoPulang}', '_blank')">Pulang</button>` : '';
-              linkFoto = `${fMasuk} ${fMasuk && fPulang ? '|':''} ${fPulang}`;
+            // Rendering Komponen Tampilan Preview Gambar Mini / Thumbnail Wajah
+            let previewMasuk = `<span class="no-img">Tidak Ada Foto</span>`;
+            let previewPulang = `<span class="no-img">Belum Absen Pulang</span>`;
+
+            if(item.fotoMasuk) {
+              previewMasuk = `<img src="${item.fotoMasuk}" class="img-preview" alt="Foto Masuk" onclick="window.open('${item.fotoMasuk}', '_blank')">`;
+            }
+            if(item.fotoPulang) {
+              previewPulang = `<img src="${item.fotoPulang}" class="img-preview" alt="Foto Pulang" onclick="window.open('${item.fotoPulang}', '_blank')">`;
             }
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td>${item.tanggal}</td>
+              <td><strong>${item.tanggal}</strong></td>
               <td><strong>${item.nama}</strong><br><small style="color:#718096">${item.nip} - ${item.jabatan}</small></td>
-              <td><span style="padding:2px 5px; background:#edf2f7; border-radius:4px; font-weight:bold; font-size:12px;">${item.jenis}</span></td>
+              <td><span style="padding:3px 6px; background:#edf2f7; border-radius:4px; font-weight:bold; font-size:12px;">${item.jenis}</span></td>
               <td class="text-center" style="color:var(--primary); font-weight:600;">${item.jamMasuk}</td>
               <td class="text-center" style="color:var(--info); font-weight:600;">${item.jamPulang}</td>
               <td style="color:${item.terlambat !== '0'?'var(--danger)':'inherit'}; font-weight:600;">${item.terlambat === '0'?'Tepat Waktu':item.terlambat}</td>
-              <td style="max-width:250px; white-space:normal; font-size:12px; line-height:1.4;">
-                <strong>Situs/Lokasi:</strong> ${item.alamat || "-"}<br>
-                <strong>Tugas:</strong> ${item.uraian || "-"}<br>
-                <strong>Output Berkas:</strong> ${item.output || "-"}
-              </td>
-              <td>${linkFoto}</td>
+              <td class="text-center">${previewMasuk}</td>
+              <td class="text-center">${previewPulang}</td>
             `;
             tbody.appendChild(tr);
           });
-          updateStats(data.data.length, wfo, luar, telat);
+          updateStats(totalRow, wfo, luar, telat);
         }
-      } catch (e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center">Gagal mengekstrak data dari server cloud.</td></tr>`; } finally { showLoading(false); }
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center">Gagal memuat rekap master cloud data server.</td></tr>`; } finally { showLoading(false); }
     }
 
     function updateStats(total, wfo, luar, telat) {
@@ -210,7 +310,6 @@
       document.getElementById("statTerlambat").innerText = telat;
     }
 
-    // Jalankan otomatis saat halaman terbuka
     window.onload = initDashboard;
   </script>
 </body>
