@@ -1,386 +1,291 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Monitoring KPU (Admin)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-slate-100 font-sans antialiased text-slate-800">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DASHBOARD MONITORING ADMIN - KPU</title>
+  <style>
+    :root {
+      --primary: #15834f;
+      --primary-dark: #0f613a;
+      --bg-gradient: linear-gradient(135deg, #e53e3e 0%, #821c1c 100%);
+      --gray-light: #f8f9fa;
+      --text-dark: #2d3748;
+      --danger: #e53e3e;
+      --warning: #dd6b20;
+      --info: #3182ce;
+    }
 
-    <header class="bg-[#245D9E] text-white text-center py-6 px-4 shadow-md">
-        <h1 class="text-2xl md:text-3xl font-bold tracking-wide uppercase">PANEL MONITORING KPU (ADMIN)</h1>
-        <p class="text-sm md:text-base text-slate-200 mt-1">Pusat Rekapitulasi Data Kehadiran dan Manajemen Izin Pegawai</p>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      color: #ffffff;
+      padding: 20px 15px;
+    }
+
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 25px; padding: 10px 0; }
+    header h1 { font-size: 24px; letter-spacing: 1px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    header p { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+
+    .card {
+      background: #ffffff;
+      color: var(--text-dark);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      margin-bottom: 20px;
+    }
+
+    h2, h3 {
+      font-size: 18px;
+      color: #821c1c;
+      margin-bottom: 15px;
+      border-bottom: 2px solid var(--gray-light);
+      padding-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    label { font-size: 13px; font-weight: 600; color: #718096; display: block; margin-bottom: 5px; }
+    select, input { width: 100%; padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; background-color: var(--gray-light); outline: none; }
+
+    button { width: 100%; padding: 14px; background: #821c1c; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    button:hover { background: #611313; }
+
+    /* Stats Layout */
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; margin-bottom: 20px; }
+    .stat-card { background: var(--gray-light); padding: 15px 10px; border-radius: 10px; text-align: center; border-left: 5px solid #821c1c; }
+    .stat-card.info { border-left-color: var(--info); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card p { font-size: 11px; color: #718096; text-transform: uppercase; font-weight: 600; }
+    .stat-card h4 { font-size: 24px; color: var(--text-dark); margin-top: 5px; }
+
+    /* Responsive Table */
+    .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background-color: #821c1c; color: white; padding: 12px 10px; font-weight: 600; text-align: left; white-space: nowrap; }
+    td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; color: var(--text-dark); }
+    tr:nth-child(even) { background-color: #f7fafc; }
+    .text-center { text-align: center; }
+
+    .btn-link { background: none; border: none; color: #3182ce; text-decoration: underline; cursor: pointer; font-size: 12px; font-weight: 600; width: auto; margin: 0; padding: 2px; }
+    
+    .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 16px; }
+
+    #view-admin-panel { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="loading-overlay" id="loading">Mengekstrak data rekapitulasi dari server master...</div>
+
+  <div class="container">
+    <header>
+      <h1>PANEL MONITORING KPU KOTA MALANG</h1>
+      <p>Sistem Pemantauan Absensi Utama Pegawai Struktural</p>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <button id="tab-laporan-btn" onclick="switchTab('laporan')" class="flex items-center justify-center gap-2 bg-white text-[#245D9E] font-semibold py-4 px-6 rounded-lg shadow-sm border-b-4 border-[#245D9E] transition-all duration-200">
-                📊 Dashboard Laporan
-            </button>
-            <button id="tab-izin-btn" onclick="switchTab('izin')" class="flex items-center justify-center gap-2 bg-[#2E6CAE] text-white/90 font-semibold py-4 px-6 rounded-lg shadow-sm border-b-4 border-transparent hover:bg-[#245D9E] transition-all duration-200">
-                ✍️ Input Cuti / Izin Manual
-            </button>
+    <!-- ADMIN LOGIN AUTHENTICATION -->
+    <div class="card" id="view-admin-login">
+      <h2>Otentikasi Kredensial Admin</h2>
+      <br>
+      <label for="adminNama">Pilih Akun Penanggung Jawab / Admin</label>
+      <select id="adminNama">
+        <option value="">-- Hubungkan Nama Akun --</option>
+      </select>
+      <br><br>
+      <label for="adminPassword">Kata Sandi Otoritas</label>
+      <input type="password" id="adminPassword" placeholder="Masukkan password pengawas">
+      <button onclick="loginAdmin()">VERIFIKASI LOG IN</button>
+    </div>
+
+    <!-- UTAMA: MASTER REPORT HUB PANEL -->
+    <div id="view-admin-panel">
+      <div class="card">
+        <h3>Sesi Pengawas Aktif</h3>
+        <p id="labelPengawas" style="margin-top: 5px; font-size: 15px; font-weight: 600; color: #2d3748;">Pengawas: -</p>
+        <button type="button" style="background:#edf2f7; color:var(--text-dark); max-width: 150px; padding: 8px; font-size: 13px;" onclick="logoutAdmin()">Keluar Sesi</button>
+      </div>
+
+      <div class="card">
+        <h3>Visualisasi Laporan Rekapitulasi</h3>
+        <br>
+        <label for="adminFilterBulan">Pilih Periode Bulan Laporan</label>
+        <input type="month" id="adminFilterBulan" onchange="loadDashboardAdmin()">
+
+        <!-- Scorecard Summary Cards -->
+        <div class="stats-container">
+          <div class="stat-card info">
+            <p>Total Log Presensi</p>
+            <h4 id="statTotal">0</h4>
+          </div>
+          <div class="stat-card">
+            <p>Hadir Kantor (WFO)</p>
+            <h4 id="statWfo">0</h4>
+          </div>
+          <div class="stat-card warning">
+            <p>Non-WFO (WFH/DL)</p>
+            <h4 id="statLuar">0</h4>
+          </div>
+          <div class="stat-card danger">
+            <p>Kasus Terlambat</p>
+            <h4 id="statTerlambat">0</h4>
+          </div>
         </div>
 
-        <section id="section-laporan" class="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-            <h2 class="text-xl font-bold text-[#245D9E] uppercase tracking-wide border-b pb-3 mb-6">Saringan Data Rekapitulasi</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">Metode Penarikan</label>
-                    <select id="metode-penarikan" onchange="handleFilterChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E] cursor-pointer">
-                        <option value="bulanan" selected>Laporan Bulanan (By Month)</option>
-                        <option value="harian">Laporan Harian (By Date)</option>
-                        <option value="rentang">Rentang Waktu (Custom Range)</option>
-                    </select>
-                </div>
+        <!-- Master Data Table -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Nama Pegawai</th>
+                <th>Presensi</th>
+                <th class="text-center">Masuk</th>
+                <th class="text-center">Pulang</th>
+                <th>Keterlambatan</th>
+                <th>Rincian Agenda Kerja & Lokasi</th>
+                <th>Berkas Bukti</th>
+              </tr>
+            </thead>
+            <tbody id="tabelAdminBody">
+              <tr><td colspan="8" class="text-center" style="color: #a0aec0; padding: 20px;">Tentukan bulan laporan untuk melihat log rekap.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                <div>
-                    <label id="label-waktu" class="block text-sm font-semibold text-slate-600 mb-1">Pilih Bulan & Tahun</label>
-                    <div id="container-input-waktu">
-                        <input type="month" id="filter-bulan" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">
-                    </div>
-                </div>
+  <script>
+    // PASTIKAN URL WEB APP INI SAMA DENGAN FILE UTAMA PEGAWAI
+    const API = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
 
-                <button onclick="prosesPenarikanData()" class="w-full bg-[#245D9E] hover:bg-[#1b487e] text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider transition-colors duration-200 shadow-md">
-                    Proses Data Rekap
-                </button>
-            </div>
+    let adminLoginSession = null;
 
-            <div class="mt-8 overflow-x-auto rounded-lg border border-slate-200 shadow-sm">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-[#245D9E] text-white text-sm font-semibold whitespace-nowrap">
-                            <th class="p-4 border-r border-blue-400/30">Tanggal</th>
-                            <th class="p-4 border-r border-blue-400/30">NIP</th>
-                            <th class="p-4 border-r border-blue-400/30">Nama Pegawai</th>
-                            <th class="p-4 border-r border-blue-400/30">Status</th>
-                            <th class="p-4 border-r border-blue-400/30">Jam Masuk</th>
-                            <th class="p-4 border-r border-blue-400/30">Jam Pulang</th>
-                            <th class="p-4 border-r border-blue-400/30 text-center">Foto Masuk</th>
-                            <th class="p-4 text-center">Foto Pulang</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabel-rekap-body" class="divide-y divide-slate-200 bg-white text-sm">
-                        <tr>
-                            <td colspan="8" class="p-8 text-center text-slate-400 italic">
-                                Silakan pilih saringan data dan klik "Proses Data Rekap" untuk memuat data.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+    function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
-        <section id="section-izin" class="bg-white rounded-xl shadow-sm p-6 border border-slate-200 hidden">
-            <h2 class="text-xl font-bold text-[#245D9E] uppercase tracking-wide border-b pb-3 mb-6">Formulir Input Izin / Cuti / Sakit Manual</h2>
-            
-            <form id="form-izin" onsubmit="submitIzinManual(event)" class="space-y-4 max-w-2xl mx-auto">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">Pilih Pegawai</label>
-                    <select id="input-pegawai-select" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">
-                        <option value="">-- Memuat Daftar Pegawai... --</option>
-                    </select>
-                </div>
+    async function initAdminDropdown() {
+      try {
+        const res = await fetch(API);
+        const data = await res.json();
+        if(data.result === "success") {
+          const select = document.getElementById("adminNama");
+          data.pegawai.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.nama; opt.textContent = p.nama;
+            select.appendChild(opt);
+          });
+        }
+      } catch(e) { console.error("Gagal menarik master data pegawai."); }
+    }
+    initAdminDropdown();
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">Jenis Ketidakhadiran</label>
-                    <div class="grid grid-cols-3 gap-4">
-                        <label class="flex items-center justify-center p-3 bg-slate-50 border border-slate-300 rounded-lg cursor-pointer hover:bg-blue-5">
-                            <input type="radio" name="jenis_izin" value="Cuti" class="mr-2 accent-[#245D9E]" checked> Cuti
-                        </label>
-                        <label class="flex items-center justify-center p-3 bg-slate-50 border border-slate-300 rounded-lg cursor-pointer hover:bg-blue-5">
-                            <input type="radio" name="jenis_izin" value="Sakit" class="mr-2 accent-[#245D9E]"> Sakit
-                        </label>
-                        <label class="flex items-center justify-center p-3 bg-slate-50 border border-slate-300 rounded-lg cursor-pointer hover:bg-blue-5">
-                            <input type="radio" name="jenis_izin" value="Izin" class="mr-2 accent-[#245D9E]"> Izin Resmi
-                        </label>
-                    </div>
-                </div>
+    async function loginAdmin() {
+      const nama = document.getElementById("adminNama").value;
+      const password = document.getElementById("adminPassword").value;
+      if(!nama || !password) { alert("Lengkapi data kredensial login!"); return; }
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">Pilih Tanggal Pelaksanaan</label>
-                    <input type="date" id="input-tgl-izin" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">
-                </div>
+      showLoading(true);
+      try {
+        const url = `${API}?mode=login&nama=${encodeURIComponent(nama)}&password=${encodeURIComponent(password)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if(data.result === "error") throw new Error(data.message);
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-600 mb-1">Alasan Tambahan / Uraian</label>
-                    <textarea id="input-alasan" rows="3" placeholder="Contoh: Cuti Kerja Tahunan / Surat Sakit Dokter Terlampir" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]"></textarea>
-                </div>
+        // Security Validation Ring 1 di Sisi Client: Memastikan struktural atau nama mengandung otorisasi admin
+        const rNama = data.nama.toLowerCase();
+        const rJabatan = data.jabatan.toLowerCase();
+        if (!(rNama.includes("admin") || rJabatan.includes("ketua") || rJabatan.includes("sekretaris") || rJabatan.includes("komisioner"))) {
+          throw new Error("Akses ditolak! Akun Anda tidak memiliki otoritas akses Panel Admin Evaluator.");
+        }
 
-                <div class="pt-2">
-                    <button type="submit" id="btn-submit-izin" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider transition-colors duration-200 shadow-md">
-                        Simpan Data Izin
-                    </button>
-                </div>
-            </form>
-        </section>
-
-    </main>
-
-    <script>
-        // ⚠️ PENTING: Ganti URL di bawah ini dengan URL Web App Deployment hasil Deploy Google Apps Script (kode.gs) Anda
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
+        adminLoginSession = data;
+        document.getElementById("labelPengawas").innerText = `Pengawas Aktif: ${adminLoginSession.nama} (${adminLoginSession.jabatan})`;
+        document.getElementById("view-admin-login").style.display = "none";
+        document.getElementById("view-admin-panel").style.display = "block";
         
-        // Endpoint ekspor CSV publik data absensi (Sudah disesuaikan ke GID Sheet ABSENSI Anda)
-        const CSV_URL = "// Ganti baris CSV_URL lama dengan link publik baru di bawah ini:
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd_dl_lNox9EDlcv2QmCh9xEiVAu93HJa8GLDSV3Cm7KfCAgFaTxBv4F2ppwiB8GFGft11f3HF2Mmv/pub?gid=1456415256&single=true&output=csv";
+        // Auto set filter bulan berjalan
+        const kini = new Date();
+        const bln = String(kini.getMonth() + 1).padStart(2, '0');
+        document.getElementById("adminFilterBulan").value = `${kini.getFullYear()}-${bln}`;
+        loadDashboardAdmin();
 
-        let cachePegawai = [];
+      } catch(err) { alert(err.message); } finally { showLoading(false); }
+    }
 
-        // Inisialisasi awal saat dokumen selesai dimuat
-        window.addEventListener('DOMContentLoaded', () => {
-            // Set otomatis value input bulan ke bulan berjalan saat ini (Format: YYYY-MM)
-            const skrg = new Date();
-            const bulanStr = String(skrg.getMonth() + 1).padStart(2, '0');
-            document.getElementById('filter-bulan').value = `${skrg.getFullYear()}-${bulanStr}`;
-            
-            muatDropdownPegawai();
-        });
+    async function loadDashboardAdmin() {
+      const bulan = document.getElementById("adminFilterBulan").value;
+      if(!bulan || !adminLoginSession) return;
 
-        // 1. Ambil Data Pegawai dari kode.gs untuk pengisian dropdown nama di Form Manual Cuti
-        async function muatDropdownPegawai() {
-            try {
-                const response = await fetch(WEB_APP_URL);
-                const json = await response.json();
-                if (json.result === "success") {
-                    cachePegawai = json.pegawai;
-                    const select = document.getElementById('input-pegawai-select');
-                    select.innerHTML = '<option value="">-- Pilih Pegawai --</option>';
-                    json.pegawai.forEach(p => {
-                        select.innerHTML += `<option value="${p.nama}">${p.nama}</option>`;
-                    });
-                }
-            } catch (err) {
-                console.error("Gagal memuat list pegawai untuk dropdown:", err);
-                document.getElementById('input-pegawai-select').innerHTML = '<option value="">Gagal memuat data pegawai</option>';
+      showLoading(true);
+      const tbody = document.getElementById("tabelAdminBody");
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center">Sinkronisasi data master laporan...</td></tr>`;
+
+      try {
+        const res = await fetch(`${API}?mode=admin_dashboard&bulan=${bulan}`);
+        const data = await res.json();
+
+        if (data.result === "success") {
+          tbody.innerHTML = "";
+          let wfo = 0, luar = 0, telat = 0;
+
+          if (data.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:var(--danger)">Tidak ditemukan data absensi pada periode bulan ini.</td></tr>`;
+            updateStats(0,0,0,0); return;
+          }
+
+          data.data.forEach(item => {
+            if(item.jenis === "WFO") wfo++; else luar++;
+            if(item.terlambat !== "0") telat++;
+
+            let linkFoto = "-";
+            if(item.fotoMasuk || item.fotoPulang) {
+              let fMasuk = item.fotoMasuk ? `<button class="btn-link" onclick="window.open('${item.fotoMasuk}', '_blank')">Masuk</button>` : '';
+              let fPulang = item.fotoPulang ? `<button class="btn-link" onclick="window.open('${item.fotoPulang}', '_blank')">Pulang</button>` : '';
+              linkFoto = `${fMasuk} ${fMasuk && fPulang ? '|':''} ${fPulang}`;
             }
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${item.tanggal}</td>
+              <td><strong>${item.nama}</strong><br><small style="color:#718096">${item.nip} - ${item.jabatan}</small></td>
+              <td><span style="padding:2px 5px; background:#edf2f7; border-radius:4px; font-weight:bold; font-size:12px;">${item.jenis}</span></td>
+              <td class="text-center" style="color:var(--primary); font-weight:600;">${item.jamMasuk}</td>
+              <td class="text-center" style="color:var(--info); font-weight:600;">${item.jamPulang}</td>
+              <td style="color:${item.terlambat !== '0'?'var(--danger)':'inherit'}; font-weight:600;">${item.terlambat === '0'?'Tepat Waktu':item.terlambat}</td>
+              <td style="max-width:250px; white-space:normal; font-size:12px; line-height:1.4;">
+                <strong>Situs/Lokasi:</strong> ${item.alamat || "-"}<br>
+                <strong>Tugas:</strong> ${item.uraian || "-"}<br>
+                <strong>Output Berkas:</strong> ${item.output || "-"}
+              </td>
+              <td>${linkFoto}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+          updateStats(data.data.length, wfo, luar, telat);
         }
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center">Gagal mengekstrak data dari server cloud.</td></tr>`; } finally { showLoading(false); }
+    }
 
-        // 2. Logika interaktif pergantian jenis komponen saringan data
-        function handleFilterChange() {
-            const metode = document.getElementById('metode-penarikan').value;
-            const labelWaktu = document.getElementById('label-waktu');
-            const containerInput = document.getElementById('container-input-waktu');
+    function updateStats(total, wfo, luar, telat) {
+      document.getElementById("statTotal").innerText = total;
+      document.getElementById("statWfo").innerText = wfo;
+      document.getElementById("statLuar").innerText = luar;
+      document.getElementById("statTerlambat").innerText = telat;
+    }
 
-            if (metode === 'harian') {
-                labelWaktu.innerText = "Pilih Tanggal";
-                containerInput.innerHTML = `<input type="date" id="filter-tanggal" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">`;
-            } else if (metode === 'bulanan') {
-                labelWaktu.innerText = "Pilih Bulan & Tahun";
-                containerInput.innerHTML = `<input type="month" id="filter-bulan" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">`;
-            } else if (metode === 'rentang') {
-                labelWaktu.innerText = "Tentukan Rentang Waktu Awal & Akhir";
-                containerInput.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="date" id="filter-mulai" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">
-                        <input type="date" id="filter-selesai" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]">
-                    </div>
-                `;
-            }
-        }
-
-        // 3. Menarik seluruh rekaman data dari CSV & menyaringnya dengan Parser Anti-Koma Teks
-        async function prosesPenarikanData() {
-            const tabelBody = document.getElementById('tabel-rekap-body');
-            tabelBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-blue-600 font-semibold">🔄 Sedang menarik dan menyaring data...</td></tr>`;
-
-            const metode = document.getElementById('metode-penarikan').value;
-
-            try {
-                const response = await fetch(CSV_URL);
-                if (!response.ok) throw new Error("Gagal mengambil response file sheet.");
-                const rawText = await response.text();
-                
-                // Pisahkan teks berdasarkan baris
-                const baris = rawText.split(/\r?\n/);
-                let htmlRender = "";
-                let jumlahDataFound = 0;
-
-                // Loop melompati baris pertama (Header Kolom)
-                for (let i = 1; i < baris.length; i++) {
-                    if (baris[i].trim() === '') continue;
-                    
-                    // Algoritma Parser CSV Kustom: Melindungi koma di dalam tanda kutip nama (Contoh: Pelangi Rizqa, S.E)
-                    const kolom = [];
-                    let dalamKutip = false;
-                    let isiKolom = "";
-                    
-                    for (let j = 0; j < baris[i].length; j++) {
-                        let char = baris[i][j];
-                        if (char === '"') {
-                            dalamKutip = !dalamKutip;
-                        } else if (char === ',' && !dalamKutip) {
-                            kolom.push(isiKolom.trim().replace(/^"|"$/g, ''));
-                            isiKolom = "";
-                        } else {
-                            isiKolom += char;
-                        }
-                    }
-                    kolom.push(isiKolom.trim().replace(/^"|"$/g, ''));
-
-                    // Memetakan nilai variabel berdasarkan urutan kolom di tabel ABSENSI Anda
-                    const tglRow        = kolom[0] || '';   // Kolom A
-                    const nipRow        = kolom[1] || '';   // Kolom B
-                    const namaRow       = kolom[2] || '';   // Kolom C (Kebal koma gelar)
-                    const statusRow     = kolom[3] || '';   // Kolom D
-                    const jamMasuk      = kolom[4] || '-';  // Kolom E
-                    const jamPulang     = kolom[5] || '-';  // Kolom F
-                    // Indeks 6 s/dn 10 dipesan untuk data internal (Jabatan, Atasan, Uraian, Output, Alamat)
-                    const urlFotoMasuk  = kolom[11] || '';  // Kolom L (Foto Masuk)
-                    const urlFotoPulang = kolom[12] || '';  // Kolom M (Foto Pulang)
-
-                    // Memeriksa kesesuaian filter waktu
-                    let isMatch = false;
-                    const dateObj = parseStringToDate(tglRow);
-                    if (!dateObj) continue;
-
-                    const yyyy = dateObj.getFullYear();
-                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    const dd = String(dateObj.getDate()).padStart(2, '0');
-                    const stringFormatIos = `${yyyy}-${mm}-${dd}`; // YYYY-MM-DD
-
-                    if (metode === 'bulanan') {
-                        const filterBulan = document.getElementById('filter-bulan').value; // YYYY-MM
-                        if (`${yyyy}-${mm}` === filterBulan) isMatch = true;
-                    } else if (metode === 'harian') {
-                        const filterTanggal = document.getElementById('filter-tanggal').value; // YYYY-MM-DD
-                        if (stringFormatIos === filterTanggal) isMatch = true;
-                    } else if (metode === 'rentang') {
-                        const mulai = document.getElementById('filter-mulai').value;
-                        const selesai = document.getElementById('filter-selesai').value;
-                        if (mulai && selesai && stringFormatIos >= mulai && stringFormatIos <= selesai) isMatch = true;
-                    }
-
-                    // Jika data lolos filter saringan waktu, render ke baris tabel HTML
-                    if (isMatch) {
-                        jumlahDataFound++;
-                        
-                        // Menyesuaikan warna badge status secara dinamis
-                        let badgeColor = 'bg-blue-100 text-blue-800';
-                        if (statusRow.toLowerCase() === 'hadir' || statusRow.toLowerCase() === 'wfa' || statusRow.toLowerCase() === 'masuk') {
-                            badgeColor = 'bg-green-100 text-green-800';
-                        } else if (statusRow.toLowerCase() === 'sakit') {
-                            badgeColor = 'bg-red-100 text-red-800';
-                        } else if (['cuti', 'izin'].includes(statusRow.toLowerCase())) {
-                            badgeColor = 'bg-yellow-100 text-yellow-800';
-                        }
-
-                        // Logika deteksi rendering gambar wajah pratinjau
-                        let imgMasuk = (urlFotoMasuk && urlFotoMasuk.startsWith('http')) 
-                            ? `<img src="${urlFotoMasuk}" class="w-12 h-12 rounded-md object-cover mx-auto border border-slate-300 hover:scale-150 transition-transform duration-200 cursor-zoom-in">`
-                            : `<span class="text-slate-400 text-xs italic">No Image</span>`;
-                        
-                        let imgPulang = (urlFotoPulang && urlFotoPulang.startsWith('http')) 
-                            ? `<img src="${urlFotoPulang}" class="w-12 h-12 rounded-md object-cover mx-auto border border-slate-300 hover:scale-150 transition-transform duration-200 cursor-zoom-in">`
-                            : `<span class="text-slate-400 text-xs italic">No Image</span>`;
-
-                        htmlRender += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="p-4 font-medium">${tglRow}</td>
-                                <td class="p-4 text-slate-600">${nipRow}</td>
-                                <td class="p-4 font-semibold text-slate-900">${namaRow}</td>
-                                <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColor}">${statusRow}</span></td>
-                                <td class="p-4 text-slate-600">${jamMasuk}</td>
-                                <td class="p-4 text-slate-600">${jamPulang}</td>
-                                <td class="p-2 text-center">${imgMasuk}</td>
-                                <td class="p-2 text-center">${imgPulang}</td>
-                            </tr>
-                        `;
-                    }
-                }
-
-                tabelBody.innerHTML = jumlahDataFound > 0 ? htmlRender : `<tr><td colspan="8" class="p-8 text-center text-slate-400 italic">Tidak ditemukan data absensi yang cocok dengan saringan waktu terpilih.</td></tr>`;
-
-            } catch (error) {
-                console.error(error);
-                tabelBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-red-500 font-bold bg-red-50">⚠️ Gagal memproses data. Pastikan setelan "Bagikan Ke Siapa Saja" & "Publish to Web" di Google Sheets sudah aktif.</td></tr>`;
-            }
-        }
-
-        // 4. Parser Tanggal: Mengonversi format "25/03/26" (2 digit tahun) menjadi objek waktu JS secara akurat
-        function parseStringToDate(str) {
-            if (!str) return null;
-            let parts = [];
-            if (str.includes('/')) {
-                parts = str.split('/');
-                let day = parseInt(parts[0], 10);
-                let month = parseInt(parts[1], 10) - 1;
-                let year = parts[2].trim();
-                if (year.length === 2) year = '20' + year; // Koreksi otomatis 2 digit tahun ke 4 digit (26 -> 2026)
-                return new Date(parseInt(year, 10), month, day);
-            } else if (str.includes('-')) {
-                parts = str.split('-');
-                if (parts[0].length === 4) {
-                    return new Date(str);
-                } else {
-                    let day = parseInt(parts[0], 10);
-                    let month = parseInt(parts[1], 10) - 1;
-                    let year = parts[2].trim();
-                    if (year.length === 2) year = '20' + year;
-                    return new Date(parseInt(year, 10), month, day);
-                }
-            }
-            return null;
-        }
-
-        // 5. Submit Form Izin / Cuti secara Manual melalui metode HTTP POST ke API Google Apps Script
-        async function submitIzinManual(event) {
-            event.preventDefault();
-            const btn = document.getElementById('btn-submit-izin');
-            
-            const namaSelect = document.getElementById('input-pegawai-select').value;
-            const jenisIzin = document.querySelector('input[name="jenis_izin"]:checked').value;
-            const tglMentah = document.getElementById('input-tgl-izin').value; // Output bawaan: YYYY-MM-DD
-            const alasan = document.getElementById('input-alasan').value;
-
-            // Memecah dan mengonversi format tanggal kembali ke DD/MM/YYYY agar seragam masuk ke kolom A spreadsheet
-            const parts = tglMentah.split('-');
-            const tglFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
-
-            btn.disabled = true;
-            btn.innerText = "⏳ MENYIMPAN DATA...";
-
-            // Menyusun query parameter yang dibutuhkan oleh fungsi doPost(e) di kode.gs Anda
-            const targetUrl = `${WEB_APP_URL}?nama=${encodeURIComponent(namaSelect)}&jenis=${encodeURIComponent(jenisIzin)}&status=${encodeURIComponent(jenisIzin)}&jam=-&uraian_tugas=${encodeURIComponent(alasan)}&foto=`;
-
-            try {
-                // Menggunakan mode 'no-cors' karena eksekusi Apps Script akan mengalihkan (redirect) respon
-                await fetch(targetUrl, { method: 'POST', mode: 'no-cors' });
-                alert(`Data ketidakhadiran (${jenisIzin}) untuk ${namaSelect} berhasil diajukan ke sistem.`);
-                document.getElementById('form-izin').reset();
-                switchTab('laporan');
-                prosesPenarikanData(); // Refresh tampilan tabel rekap secara otomatis
-            } catch (err) {
-                alert("Proses pengiriman selesai dijalankan. Silakan periksa pembaharuan baris pada spreadsheet.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "SIMPAN DATA IZIN";
-            }
-        }
-
-        // Fungsi Pembantu Navigasi Tab Kontrol Dasbor
-        function switchTab(tab) {
-            const btnLaporan = document.getElementById('tab-laporan-btn');
-            const btnIzin = document.getElementById('tab-izin-btn');
-            const secLaporan = document.getElementById('section-laporan');
-            const secIzin = document.getElementById('section-izin');
-
-            if (tab === 'laporan') {
-                btnLaporan.className = "flex items-center justify-center gap-2 bg-white text-[#245D9E] font-semibold py-4 px-6 rounded-lg shadow-sm border-b-4 border-[#245D9E] transition-all duration-200";
-                btnIzin.className = "flex items-center justify-center gap-2 bg-[#2E6CAE] text-white/90 font-semibold py-4 px-6 rounded-lg shadow-sm border-b-4 border-transparent hover:bg-[#245D9E] transition-all duration-200";
-                secLaporan.classList.remove('hidden');
-                secIzin.classList.add('hidden');
-            } else {
-                btnIzin.className = "flex items-center justify-center gap-2 bg-white text-[#245D9E] font-semibold py-4 px-6 rounded-lg shadow-sm border-b-4 border-[#245D9E] transition-all duration-200";
-                btnLaporan.className = "flex items-center justify-center gap-2 bg-[#2E6CAE] text-white/90 font-semibold py-4 px-6 rounded-lg shadow-sm border-b-4 border-transparent hover:bg-[#245D9E] transition-all duration-200";
-                secIzin.classList.remove('hidden');
-                secLaporan.classList.add('hidden');
-            }
-        }
-    </script>
+    function logoutAdmin() {
+      adminLoginSession = null;
+      document.getElementById("adminPassword").value = "";
+      document.getElementById("view-admin-panel").style.display = "none";
+      document.getElementById("view-admin-login").style.display = "block";
+    }
+  </script>
 </body>
 </html>
