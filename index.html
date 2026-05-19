@@ -108,7 +108,7 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-slate-600 mb-1">Alasan Tambahan / Uraian</label>
-                    <textarea id="input-alasan" rows="3" placeholder="Contoh: Cuti Tahunan Alasan Penting / Mengikuti Diklat" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]"></textarea>
+                    <textarea id="input-alasan" rows="3" placeholder="Contoh: Cuti Kerja Tahunan / Surat Sakit Dokter Terlampir" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#245D9E]"></textarea>
                 </div>
 
                 <div class="pt-2">
@@ -122,17 +122,17 @@
     </main>
 
     <script>
-        // CONFIG: Masukkan URL Web App Deployment dari Google Apps Script (.gs) Anda di sini
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXXXX_XXXXXX/exec";
+        // ⚠️ PENTING: Ganti URL di bawah ini dengan URL Web App Deployment hasil Deploy Google Apps Script (kode.gs) Anda
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
         
-        // URL Publik CSV ekspor spreadsheet untuk pembacaan instan skala besar
+        // Endpoint ekspor CSV publik data absensi (Sudah disesuaikan ke GID Sheet ABSENSI Anda)
         const CSV_URL = "https://docs.google.com/spreadsheets/d/1wMCMM9_6L-rWIgOuWHtQPMnPHkIRZQ_E_ltqIFGujsA/export?format=csv&gid=1456415256";
 
         let cachePegawai = [];
 
         // Inisialisasi awal saat dokumen selesai dimuat
         window.addEventListener('DOMContentLoaded', () => {
-            // Set default value bulan sekarang (YYYY-MM)
+            // Set otomatis value input bulan ke bulan berjalan saat ini (Format: YYYY-MM)
             const skrg = new Date();
             const bulanStr = String(skrg.getMonth() + 1).padStart(2, '0');
             document.getElementById('filter-bulan').value = `${skrg.getFullYear()}-${bulanStr}`;
@@ -140,7 +140,7 @@
             muatDropdownPegawai();
         });
 
-        // 1. Ambil Data Pegawai untuk pengisian dropdown di Form Manual Cuti melalui API gs
+        // 1. Ambil Data Pegawai dari kode.gs untuk pengisian dropdown nama di Form Manual Cuti
         async function muatDropdownPegawai() {
             try {
                 const response = await fetch(WEB_APP_URL);
@@ -159,7 +159,7 @@
             }
         }
 
-        // 2. Logika pergantian metode penyaringan data tanggal/bulan
+        // 2. Logika interaktif pergantian jenis komponen saringan data
         function handleFilterChange() {
             const metode = document.getElementById('metode-penarikan').value;
             const labelWaktu = document.getElementById('label-waktu');
@@ -182,7 +182,7 @@
             }
         }
 
-        // 3. Tarik data absensi massal dari CSV endpoint & lakukan filtering di sisi klien (efisien & cepat)
+        // 3. Menarik seluruh rekaman data dari CSV & menyaringnya dengan Parser Anti-Koma Teks
         async function prosesPenarikanData() {
             const tabelBody = document.getElementById('tabel-rekap-body');
             tabelBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-blue-600 font-semibold">🔄 Sedang menarik dan menyaring data...</td></tr>`;
@@ -193,27 +193,46 @@
                 const response = await fetch(CSV_URL);
                 if (!response.ok) throw new Error("Gagal mengambil response file sheet.");
                 const rawText = await response.text();
-                const baris = rawText.split('\n');
-
+                
+                // Pisahkan teks berdasarkan baris
+                const baris = rawText.split(/\r?\n/);
                 let htmlRender = "";
                 let jumlahDataFound = 0;
 
-                // Loop data melompati header (i=1)
+                // Loop melompati baris pertama (Header Kolom)
                 for (let i = 1; i < baris.length; i++) {
                     if (baris[i].trim() === '') continue;
                     
-                    // Split kolom dengan koma
-                    const kolom = baris[i].split(',');
-                    const tglRow = kolom[0] ? kolom[0].trim() : ''; // DD/MM/YYYY atau YYYY-MM-DD
-                    const nipRow = kolom[1] ? kolom[1].trim() : '';
-                    const namaRow = kolom[2] ? kolom[2].trim() : '';
-                    const statusRow = kolom[3] ? kolom[3].trim() : '';
-                    const jamMasuk = kolom[4] ? kolom[4].trim() : '-';
-                    const jamPulang = kolom[5] ? kolom[5].trim() : '-';
-                    const urlFotoMasuk = kolom[11] ? kolom[11].trim() : ''; // Kolom L
-                    const urlFotoPulang = kolom[12] ? kolom[12].trim() : ''; // Kolom M
+                    // Algoritma Parser CSV Kustom: Melindungi koma di dalam tanda kutip nama (Contoh: Pelangi Rizqa, S.E)
+                    const kolom = [];
+                    let dalamKutip = false;
+                    let isiKolom = "";
+                    
+                    for (let j = 0; j < baris[i].length; j++) {
+                        let char = baris[i][j];
+                        if (char === '"') {
+                            dalamKutip = !dalamKutip;
+                        } else if (char === ',' && !dalamKutip) {
+                            kolom.push(isiKolom.trim().replace(/^"|"$/g, ''));
+                            isiKolom = "";
+                        } else {
+                            isiKolom += char;
+                        }
+                    }
+                    kolom.push(isiKolom.trim().replace(/^"|"$/g, ''));
 
-                    // Validasi saringan waktu secara presisi
+                    // Memetakan nilai variabel berdasarkan urutan kolom di tabel ABSENSI Anda
+                    const tglRow        = kolom[0] || '';   // Kolom A
+                    const nipRow        = kolom[1] || '';   // Kolom B
+                    const namaRow       = kolom[2] || '';   // Kolom C (Kebal koma gelar)
+                    const statusRow     = kolom[3] || '';   // Kolom D
+                    const jamMasuk      = kolom[4] || '-';  // Kolom E
+                    const jamPulang     = kolom[5] || '-';  // Kolom F
+                    // Indeks 6 s/dn 10 dipesan untuk data internal (Jabatan, Atasan, Uraian, Output, Alamat)
+                    const urlFotoMasuk  = kolom[11] || '';  // Kolom L (Foto Masuk)
+                    const urlFotoPulang = kolom[12] || '';  // Kolom M (Foto Pulang)
+
+                    // Memeriksa kesesuaian filter waktu
                     let isMatch = false;
                     const dateObj = parseStringToDate(tglRow);
                     if (!dateObj) continue;
@@ -235,19 +254,27 @@
                         if (mulai && selesai && stringFormatIos >= mulai && stringFormatIos <= selesai) isMatch = true;
                     }
 
+                    // Jika data lolos filter saringan waktu, render ke baris tabel HTML
                     if (isMatch) {
                         jumlahDataFound++;
-                        let badgeColor = 'bg-green-100 text-green-800';
-                        if(['cuti', 'sakit', 'izin'].includes(statusRow.toLowerCase())) {
-                            badgeColor = statusRow.toLowerCase() === 'sakit' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+                        
+                        // Menyesuaikan warna badge status secara dinamis
+                        let badgeColor = 'bg-blue-100 text-blue-800';
+                        if (statusRow.toLowerCase() === 'hadir' || statusRow.toLowerCase() === 'wfa' || statusRow.toLowerCase() === 'masuk') {
+                            badgeColor = 'bg-green-100 text-green-800';
+                        } else if (statusRow.toLowerCase() === 'sakit') {
+                            badgeColor = 'bg-red-100 text-red-800';
+                        } else if (['cuti', 'izin'].includes(statusRow.toLowerCase())) {
+                            badgeColor = 'bg-yellow-100 text-yellow-800';
                         }
 
-                        let imgMasuk = urlFotoMasuk.startsWith('http') 
-                            ? `<img src="${urlFotoMasuk}" class="w-12 h-12 rounded-md object-cover mx-auto border hover:scale-150 transition-transform duration-200 cursor-zoom-in">`
-                            : `<span class="text-slate-400 text-xs italic">${statusRow === 'MASUK' ? 'No Image' : 'No Image ('+statusRow+')'}</span>`;
+                        // Logika deteksi rendering gambar wajah pratinjau
+                        let imgMasuk = (urlFotoMasuk && urlFotoMasuk.startsWith('http')) 
+                            ? `<img src="${urlFotoMasuk}" class="w-12 h-12 rounded-md object-cover mx-auto border border-slate-300 hover:scale-150 transition-transform duration-200 cursor-zoom-in">`
+                            : `<span class="text-slate-400 text-xs italic">No Image</span>`;
                         
-                        let imgPulang = urlFotoPulang.startsWith('http') 
-                            ? `<img src="${urlFotoPulang}" class="w-12 h-12 rounded-md object-cover mx-auto border hover:scale-150 transition-transform duration-200 cursor-zoom-in">`
+                        let imgPulang = (urlFotoPulang && urlFotoPulang.startsWith('http')) 
+                            ? `<img src="${urlFotoPulang}" class="w-12 h-12 rounded-md object-cover mx-auto border border-slate-300 hover:scale-150 transition-transform duration-200 cursor-zoom-in">`
                             : `<span class="text-slate-400 text-xs italic">No Image</span>`;
 
                         htmlRender += `
@@ -265,64 +292,76 @@
                     }
                 }
 
-                tabelBody.innerHTML = jumlahDataFound > 0 ? htmlRender : `<tr><td colspan="8" class="p-8 text-center text-slate-400 italic">Tidak ditemukan data absensi yang cocok dengan saringan waktu.</td></tr>`;
+                tabelBody.innerHTML = jumlahDataFound > 0 ? htmlRender : `<tr><td colspan="8" class="p-8 text-center text-slate-400 italic">Tidak ditemukan data absensi yang cocok dengan saringan waktu terpilih.</td></tr>`;
 
             } catch (error) {
                 console.error(error);
-                tabelBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-red-500 font-bold bg-red-50">⚠️ Gagal memproses data. Cek izin akses publik spreadsheet Anda.</td></tr>`;
+                tabelBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-red-500 font-bold bg-red-50">⚠️ Gagal memproses data. Pastikan setelan "Bagikan Ke Siapa Saja" & "Publish to Web" di Google Sheets sudah aktif.</td></tr>`;
             }
         }
 
-        // Helper: parsing string tanggal spreadsheet ke Object Date JS
+        // 4. Parser Tanggal: Mengonversi format "25/03/26" (2 digit tahun) menjadi objek waktu JS secara akurat
         function parseStringToDate(str) {
             if (!str) return null;
+            let parts = [];
             if (str.includes('/')) {
-                const p = str.split('/');
-                const yr = p[2].length === 2 ? '20' + p[2] : p[2];
-                return new Date(`${yr}-${p[1]}-${p[0]}`);
+                parts = str.split('/');
+                let day = parseInt(parts[0], 10);
+                let month = parseInt(parts[1], 10) - 1;
+                let year = parts[2].trim();
+                if (year.length === 2) year = '20' + year; // Koreksi otomatis 2 digit tahun ke 4 digit (26 -> 2026)
+                return new Date(parseInt(year, 10), month, day);
             } else if (str.includes('-')) {
-                const p = str.split('-');
-                return p[0].length === 4 ? new Date(str) : new Date(`${p[2]}-${p[1]}-${p[0]}`);
+                parts = str.split('-');
+                if (parts[0].length === 4) {
+                    return new Date(str);
+                } else {
+                    let day = parseInt(parts[0], 10);
+                    let month = parseInt(parts[1], 10) - 1;
+                    let year = parts[2].trim();
+                    if (year.length === 2) year = '20' + year;
+                    return new Date(parseInt(year, 10), month, day);
+                }
             }
             return null;
         }
 
-        // 4. Submit Form Izin / Cuti Manual via POST ke API doPost di kode.gs
+        // 5. Submit Form Izin / Cuti secara Manual melalui metode HTTP POST ke API Google Apps Script
         async function submitIzinManual(event) {
             event.preventDefault();
             const btn = document.getElementById('btn-submit-izin');
             
             const namaSelect = document.getElementById('input-pegawai-select').value;
             const jenisIzin = document.querySelector('input[name="jenis_izin"]:checked').value;
-            const tglMentah = document.getElementById('input-tgl-izin').value; // YYYY-MM-DD
+            const tglMentah = document.getElementById('input-tgl-izin').value; // Output bawaan: YYYY-MM-DD
             const alasan = document.getElementById('input-alasan').value;
 
-            // Formating tanggal ke DD/MM/YYYY sesuai standard appendRow gs kamu
+            // Memecah dan mengonversi format tanggal kembali ke DD/MM/YYYY agar seragam masuk ke kolom A spreadsheet
             const parts = tglMentah.split('-');
             const tglFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
             btn.disabled = true;
             btn.innerText = "⏳ MENYIMPAN DATA...";
 
-            // Mempersiapkan parameter URL encoded sesuai struktur penampung doPost
+            // Menyusun query parameter yang dibutuhkan oleh fungsi doPost(e) di kode.gs Anda
             const targetUrl = `${WEB_APP_URL}?nama=${encodeURIComponent(namaSelect)}&jenis=${encodeURIComponent(jenisIzin)}&status=${encodeURIComponent(jenisIzin)}&jam=-&uraian_tugas=${encodeURIComponent(alasan)}&foto=`;
 
             try {
-                // Mengirim request POST menggunakan metode no-cors karena Apps Script redirecting
+                // Menggunakan mode 'no-cors' karena eksekusi Apps Script akan mengalihkan (redirect) respon
                 await fetch(targetUrl, { method: 'POST', mode: 'no-cors' });
                 alert(`Data ketidakhadiran (${jenisIzin}) untuk ${namaSelect} berhasil diajukan ke sistem.`);
                 document.getElementById('form-izin').reset();
                 switchTab('laporan');
-                prosesPenarikanData();
+                prosesPenarikanData(); // Refresh tampilan tabel rekap secara otomatis
             } catch (err) {
-                alert("Proses simpan terkirim. Silakan verifikasi data pada lembar kendali spreadsheet.");
+                alert("Proses pengiriman selesai dijalankan. Silakan periksa pembaharuan baris pada spreadsheet.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "SIMPAN DATA IZIN";
             }
         }
 
-        // Helper Navigation Tab
+        // Fungsi Pembantu Navigasi Tab Kontrol Dasbor
         function switchTab(tab) {
             const btnLaporan = document.getElementById('tab-laporan-btn');
             const btnIzin = document.getElementById('tab-izin-btn');
