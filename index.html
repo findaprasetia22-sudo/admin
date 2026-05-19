@@ -51,10 +51,7 @@
     }
 
     label { font-size: 13px; font-weight: 600; color: #718096; display: block; margin-bottom: 5px; }
-    select, input { width: 100%; padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; background-color: var(--gray-light); outline: none; }
-
-    button { width: 100%; padding: 14px; background: #821c1c; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-    button:hover { background: #611313; }
+    input { width: 100%; padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; background-color: var(--gray-light); outline: none; }
 
     /* Stats Layout */
     .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; margin-bottom: 20px; }
@@ -76,8 +73,6 @@
     .btn-link { background: none; border: none; color: #3182ce; text-decoration: underline; cursor: pointer; font-size: 12px; font-weight: 600; width: auto; margin: 0; padding: 2px; }
     
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 16px; }
-
-    #view-admin-panel { display: none; }
   </style>
 </head>
 <body>
@@ -90,74 +85,52 @@
       <p>Sistem Pemantauan Absensi Utama Pegawai Struktural</p>
     </header>
 
-    <!-- ADMIN LOGIN AUTHENTICATION -->
-    <div class="card" id="view-admin-login">
-      <h2>Otentikasi Kredensial Admin</h2>
+    <!-- UTAMA: MASTER REPORT HUB PANEL DIRECT ACCESS -->
+    <div class="card">
+      <h3>Visualisasi Laporan Rekapitulasi</h3>
       <br>
-      <label for="adminNama">Pilih Akun Penanggung Jawab / Admin</label>
-      <select id="adminNama">
-        <option value="">-- Hubungkan Nama Akun --</option>
-      </select>
-      <br><br>
-      <label for="adminPassword">Kata Sandi Otoritas</label>
-      <input type="password" id="adminPassword" placeholder="Masukkan password pengawas">
-      <button onclick="loginAdmin()">VERIFIKASI LOG IN</button>
-    </div>
+      <label for="adminFilterBulan">Pilih Periode Bulan Laporan</label>
+      <input type="month" id="adminFilterBulan" onchange="loadDashboardAdmin()">
 
-    <!-- UTAMA: MASTER REPORT HUB PANEL -->
-    <div id="view-admin-panel">
-      <div class="card">
-        <h3>Sesi Pengawas Aktif</h3>
-        <p id="labelPengawas" style="margin-top: 5px; font-size: 15px; font-weight: 600; color: #2d3748;">Pengawas: -</p>
-        <button type="button" style="background:#edf2f7; color:var(--text-dark); max-width: 150px; padding: 8px; font-size: 13px;" onclick="logoutAdmin()">Keluar Sesi</button>
+      <!-- Scorecard Summary Cards -->
+      <div class="stats-container">
+        <div class="stat-card info">
+          <p>Total Log Presensi</p>
+          <h4 id="statTotal">0</h4>
+        </div>
+        <div class="stat-card">
+          <p>Hadir Kantor (WFO)</p>
+          <h4 id="statWfo">0</h4>
+        </div>
+        <div class="stat-card warning">
+          <p>Non-WFO (WFH/DL)</p>
+          <h4 id="statLuar">0</h4>
+        </div>
+        <div class="stat-card danger">
+          <p>Kasus Terlambat</p>
+          <h4 id="statTerlambat">0</h4>
+        </div>
       </div>
 
-      <div class="card">
-        <h3>Visualisasi Laporan Rekapitulasi</h3>
-        <br>
-        <label for="adminFilterBulan">Pilih Periode Bulan Laporan</label>
-        <input type="month" id="adminFilterBulan" onchange="loadDashboardAdmin()">
-
-        <!-- Scorecard Summary Cards -->
-        <div class="stats-container">
-          <div class="stat-card info">
-            <p>Total Log Presensi</p>
-            <h4 id="statTotal">0</h4>
-          </div>
-          <div class="stat-card">
-            <p>Hadir Kantor (WFO)</p>
-            <h4 id="statWfo">0</h4>
-          </div>
-          <div class="stat-card warning">
-            <p>Non-WFO (WFH/DL)</p>
-            <h4 id="statLuar">0</h4>
-          </div>
-          <div class="stat-card danger">
-            <p>Kasus Terlambat</p>
-            <h4 id="statTerlambat">0</h4>
-          </div>
-        </div>
-
-        <!-- Master Data Table -->
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Tanggal</th>
-                <th>Nama Pegawai</th>
-                <th>Presensi</th>
-                <th class="text-center">Masuk</th>
-                <th class="text-center">Pulang</th>
-                <th>Keterlambatan</th>
-                <th>Rincian Agenda Kerja & Lokasi</th>
-                <th>Berkas Bukti</th>
-              </tr>
-            </thead>
-            <tbody id="tabelAdminBody">
-              <tr><td colspan="8" class="text-center" style="color: #a0aec0; padding: 20px;">Tentukan bulan laporan untuk melihat log rekap.</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <!-- Master Data Table -->
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Nama Pegawai</th>
+              <th>Presensi</th>
+              <th class="text-center">Masuk</th>
+              <th class="text-center">Pulang</th>
+              <th>Keterlambatan</th>
+              <th>Rincian Agenda Kerja & Lokasi</th>
+              <th>Berkas Bukti</th>
+            </tr>
+          </thead>
+          <tbody id="tabelAdminBody">
+            <tr><td colspan="8" class="text-center" style="color: #a0aec0; padding: 20px;">Memuat rekapitulasi...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -166,62 +139,19 @@
     // PASTIKAN URL WEB APP INI SAMA DENGAN FILE UTAMA PEGAWAI
     const API = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
 
-    let adminLoginSession = null;
-
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
-    async function initAdminDropdown() {
-      try {
-        const res = await fetch(API);
-        const data = await res.json();
-        if(data.result === "success") {
-          const select = document.getElementById("adminNama");
-          data.pegawai.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p.nama; opt.textContent = p.nama;
-            select.appendChild(opt);
-          });
-        }
-      } catch(e) { console.error("Gagal menarik master data pegawai."); }
-    }
-    initAdminDropdown();
-
-    async function loginAdmin() {
-      const nama = document.getElementById("adminNama").value;
-      const password = document.getElementById("adminPassword").value;
-      if(!nama || !password) { alert("Lengkapi data kredensial login!"); return; }
-
-      showLoading(true);
-      try {
-        const url = `${API}?mode=login&nama=${encodeURIComponent(nama)}&password=${encodeURIComponent(password)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if(data.result === "error") throw new Error(data.message);
-
-        // Security Validation Ring 1 di Sisi Client: Memastikan struktural atau nama mengandung otorisasi admin
-        const rNama = data.nama.toLowerCase();
-        const rJabatan = data.jabatan.toLowerCase();
-        if (!(rNama.includes("admin") || rJabatan.includes("ketua") || rJabatan.includes("sekretaris") || rJabatan.includes("komisioner"))) {
-          throw new Error("Akses ditolak! Akun Anda tidak memiliki otoritas akses Panel Admin Evaluator.");
-        }
-
-        adminLoginSession = data;
-        document.getElementById("labelPengawas").innerText = `Pengawas Aktif: ${adminLoginSession.nama} (${adminLoginSession.jabatan})`;
-        document.getElementById("view-admin-login").style.display = "none";
-        document.getElementById("view-admin-panel").style.display = "block";
-        
-        // Auto set filter bulan berjalan
-        const kini = new Date();
-        const bln = String(kini.getMonth() + 1).padStart(2, '0');
-        document.getElementById("adminFilterBulan").value = `${kini.getFullYear()}-${bln}`;
-        loadDashboardAdmin();
-
-      } catch(err) { alert(err.message); } finally { showLoading(false); }
+    // Otomatis dipanggil saat halaman diakses
+    function initDashboard() {
+      const kini = new Date();
+      const bln = String(kini.getMonth() + 1).padStart(2, '0');
+      document.getElementById("adminFilterBulan").value = `${kini.getFullYear()}-${bln}`;
+      loadDashboardAdmin();
     }
 
     async function loadDashboardAdmin() {
       const bulan = document.getElementById("adminFilterBulan").value;
-      if(!bulan || !adminLoginSession) return;
+      if(!bulan) return;
 
       showLoading(true);
       const tbody = document.getElementById("tabelAdminBody");
@@ -280,12 +210,8 @@
       document.getElementById("statTerlambat").innerText = telat;
     }
 
-    function logoutAdmin() {
-      adminLoginSession = null;
-      document.getElementById("adminPassword").value = "";
-      document.getElementById("view-admin-panel").style.display = "none";
-      document.getElementById("view-admin-login").style.display = "block";
-    }
+    // Jalankan otomatis saat halaman terbuka
+    window.onload = initDashboard;
   </script>
 </body>
 </html>
