@@ -50,7 +50,6 @@
       text-transform: uppercase;
     }
 
-    /* Filter Responsive Layout */
     .filter-group {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -89,8 +88,8 @@
 
     /* Preview Foto Selfie Mini */
     .img-preview {
-      width: 65px;
-      height: 65px;
+      width: 70px;
+      height: 70px;
       object-fit: cover;
       border-radius: 8px;
       border: 2px solid #e2e8f0;
@@ -99,8 +98,8 @@
       background-color: #e2e8f0;
     }
     .img-preview:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .no-img {
       font-size: 11px;
@@ -125,7 +124,6 @@
       <h3>Visualisasi Laporan Rekapitulasi</h3>
       <br>
 
-      <!-- Panel Kontrol Filter Ganda (By Month & By Date) -->
       <div class="filter-group">
         <div>
           <label for="filterType">Metode Penyaringan Data</label>
@@ -146,7 +144,6 @@
         </div>
       </div>
 
-      <!-- Scorecard Indikator Ringkasan Kinerja -->
       <div class="stats-container">
         <div class="stat-card info">
           <p>Total Log Presensi</p>
@@ -166,7 +163,6 @@
         </div>
       </div>
 
-      <!-- Format Tampilan Laporan Sesuai Permintaan -->
       <div class="table-responsive">
         <table>
           <thead>
@@ -190,12 +186,28 @@
   </div>
 
   <script>
-    // PASTIKAN URL WEB APP INI SAMA DENGAN FILE UTAMA PEGAWAI
     const API = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
-    // Toggle visibilitas input filter
+    // Mengonversi URL Google Drive standar menjadi link rendering gambar mentah (Direct Link)
+    function convertToDirectLink(driveUrl) {
+      if (!driveUrl || !driveUrl.includes("id=")) {
+        // Handle jika format link drive menggunakan struktur d/FILE_ID/view
+        if (driveUrl && driveUrl.includes("/d/")) {
+          const parts = driveUrl.split("/d/");
+          if (parts[1]) {
+            const fileId = parts[1].split("/")[0];
+            return `https://docs.google.com/uc?export=view&id=${fileId}`;
+          }
+        }
+        return driveUrl;
+      }
+      const urlParams = new URLSearchParams(driveUrl.split('?')[1]);
+      const fileId = urlParams.get('id');
+      return `https://docs.google.com/uc?export=view&id=${fileId}`;
+    }
+
     function toggleFilterInputs() {
       const type = document.getElementById("filterType").value;
       if (type === "month") {
@@ -208,7 +220,6 @@
       loadDashboardAdmin();
     }
 
-    // Set nilai default saat halaman dimuat pertama kali (Bulan berjalan)
     function initDashboard() {
       const kini = new Date();
       const bln = String(kini.getMonth() + 1).padStart(2, '0');
@@ -231,7 +242,6 @@
       } else {
         targetTanggal = document.getElementById("adminFilterTanggal").value;
         if(!targetTanggal) return;
-        // Konversi format YYYY-MM-DD dari input date menjadi YYYY-MM untuk ditarik backend terlebih dahulu
         const parts = targetTanggal.split("-");
         targetBulan = parts[0] + "-" + parts[1];
       }
@@ -241,7 +251,6 @@
       tbody.innerHTML = `<tr><td colspan="8" class="text-center">Sinkronisasi data master laporan...</td></tr>`;
 
       try {
-        // Ambil data satu bulan penuh dari backend agar penarikan fleksibel
         const res = await fetch(`${API}?mode=admin_dashboard&bulan=${targetBulan}`);
         const data = await res.json();
 
@@ -249,14 +258,12 @@
           tbody.innerHTML = "";
           let wfo = 0, luar = 0, telat = 0, totalRow = 0;
 
-          // Filter lanjutan di sisi client jika user memilih metode 'by date'
           let filteredData = data.data;
           if (filterType === "date") {
             const parts = targetTanggal.split("-");
-            // Formulasi penyesuaian berbagai kemungkinan variasi teks penulisan tanggal di sheet
-            const format1 = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/MM/yyyy
-            const format2 = `${parts[2]}/${parts[1]}/${parts[0].substring(2)}`; // dd/MM/yy
-            const format3 = targetTanggal; // yyyy-MM-dd
+            const format1 = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            const format2 = `${parts[2]}/${parts[1]}/${parts[0].substring(2)}`;
+            const format3 = targetTanggal;
 
             filteredData = data.data.filter(item => {
               const tglStr = item.tanggal.trim();
@@ -274,15 +281,17 @@
             if(item.jenis === "WFO") wfo++; else luar++;
             if(item.terlambat !== "0") telat++;
 
-            // Rendering Komponen Tampilan Preview Gambar Mini / Thumbnail Wajah
             let previewMasuk = `<span class="no-img">Tidak Ada Foto</span>`;
-            let previewPulang = `<span class="no-img">Belum Absen Pulang</span>`;
+            let previewPulang = `<span class="no-img">Belum Pulang</span>`;
 
+            // Proses konversi URL sebelum disuntikkan ke tag <img>
             if(item.fotoMasuk) {
-              previewMasuk = `<img src="${item.fotoMasuk}" class="img-preview" alt="Foto Masuk" onclick="window.open('${item.fotoMasuk}', '_blank')">`;
+              const directLinkMasuk = convertToDirectLink(item.fotoMasuk);
+              previewMasuk = `<img src="${directLinkMasuk}" class="img-preview" alt="Foto Masuk" onclick="window.open('${item.fotoMasuk}', '_blank')">`;
             }
             if(item.fotoPulang) {
-              previewPulang = `<img src="${item.fotoPulang}" class="img-preview" alt="Foto Pulang" onclick="window.open('${item.fotoPulang}', '_blank')">`;
+              const directLinkPulang = convertToDirectLink(item.fotoPulang);
+              previewPulang = `<img src="${directLinkPulang}" class="img-preview" alt="Foto Pulang" onclick="window.open('${item.fotoPulang}', '_blank')">`;
             }
 
             const tr = document.createElement("tr");
