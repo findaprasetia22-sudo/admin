@@ -41,7 +41,7 @@
       margin-bottom: 20px;
     }
 
-    h2, h3 {
+    h3 {
       font-size: 18px;
       color: #821c1c;
       margin-bottom: 15px;
@@ -88,17 +88,17 @@
 
     /* Preview Foto Selfie Mini */
     .img-preview {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       object-fit: cover;
       border-radius: 8px;
       border: 2px solid #e2e8f0;
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      background-color: #e2e8f0;
+      background-color: #edf2f7;
     }
     .img-preview:hover {
-      transform: scale(1.15);
+      transform: scale(1.2);
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .no-img {
@@ -190,22 +190,27 @@
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
-    // Mengonversi URL Google Drive standar menjadi link rendering gambar mentah (Direct Link)
-    function convertToDirectLink(driveUrl) {
-      if (!driveUrl || !driveUrl.includes("id=")) {
-        // Handle jika format link drive menggunakan struktur d/FILE_ID/view
-        if (driveUrl && driveUrl.includes("/d/")) {
-          const parts = driveUrl.split("/d/");
-          if (parts[1]) {
-            const fileId = parts[1].split("/")[0];
-            return `https://docs.google.com/uc?export=view&id=${fileId}`;
-          }
-        }
-        return driveUrl;
+    // SOLUSI UTAMA: Mengonversi link Drive ke thumbnail render endpoint yang bypass proteksi hotlinking browser
+    function convertToThumbnailLink(driveUrl) {
+      if (!driveUrl) return "";
+      let fileId = "";
+      
+      // Deteksi struktur ID dari pola URL d/FILE_ID/view
+      if (driveUrl.includes("/d/")) {
+        const parts = driveUrl.split("/d/");
+        if (parts[1]) fileId = parts[1].split("/")[0];
+      } 
+      // Deteksi struktur ID dari pola URL ?id=FILE_ID
+      else if (driveUrl.includes("id=")) {
+        const urlParams = new URLSearchParams(driveUrl.split('?')[1]);
+        fileId = urlParams.get('id');
       }
-      const urlParams = new URLSearchParams(driveUrl.split('?')[1]);
-      const fileId = urlParams.get('id');
-      return `https://docs.google.com/uc?export=view&id=${fileId}`;
+      
+      // Jika ID ditemukan, kembalikan parameter thumbnail resolusi optimal (sz=w160)
+      if (fileId) {
+        return `https://docs.google.com/thumbnail?id=${fileId}&sz=w160`;
+      }
+      return driveUrl;
     }
 
     function toggleFilterInputs() {
@@ -284,14 +289,14 @@
             let previewMasuk = `<span class="no-img">Tidak Ada Foto</span>`;
             let previewPulang = `<span class="no-img">Belum Pulang</span>`;
 
-            // Proses konversi URL sebelum disuntikkan ke tag <img>
+            // Suntikkan fungsi konversi thumbnail baru di sini
             if(item.fotoMasuk) {
-              const directLinkMasuk = convertToDirectLink(item.fotoMasuk);
-              previewMasuk = `<img src="${directLinkMasuk}" class="img-preview" alt="Foto Masuk" onclick="window.open('${item.fotoMasuk}', '_blank')">`;
+              const thumbLinkMasuk = convertToThumbnailLink(item.fotoMasuk);
+              previewMasuk = `<img src="${thumbLinkMasuk}" class="img-preview" alt="Foto Masuk" onclick="window.open('${item.fotoMasuk}', '_blank')">`;
             }
             if(item.fotoPulang) {
-              const directLinkPulang = convertToDirectLink(item.fotoPulang);
-              previewPulang = `<img src="${directLinkPulang}" class="img-preview" alt="Foto Pulang" onclick="window.open('${item.fotoPulang}', '_blank')">`;
+              const thumbLinkPulang = convertToThumbnailLink(item.fotoPulang);
+              previewPulang = `<img src="${thumbLinkPulang}" class="img-preview" alt="Foto Pulang" onclick="window.open('${item.fotoPulang}', '_blank')">`;
             }
 
             const tr = document.createElement("tr");
