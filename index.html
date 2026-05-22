@@ -19,7 +19,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gradient); min-height: 100vh; color: #fff; padding: 15px; }
     
-    /* Lebar maksimal kontainer dinaikkan agar tabel memiliki ruang horizontal ekstra legah */
     .container { max-width: 100%; width: 98%; margin: 0 auto; }
     
     header { text-align: center; margin-bottom: 20px; }
@@ -46,27 +45,24 @@
     button { width: 100%; padding: 14px; background: var(--admin-color); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 15px; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
     button:hover { background: var(--admin-dark); }
     
-    /* FIX: Mematikan overflow scrollbar dan memaksa struktur layout mengikuti persentase lebar */
     .table-responsive { width: 100%; overflow-x: hidden; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-top: 15px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; } 
     
-    /* MENYETEL LEBAR PERSENTASE ADAPTIF: Total akumulasi wajib 100% agar pas satu layar */
-    th:nth-child(1), td:nth-child(1) { width: 9%; }   /* Tanggal */
-    th:nth-child(2), td:nth-child(2) { width: 15%; }  /* NIP */
-    th:nth-child(3), td:nth-child(3) { width: 23%; }  /* Nama Pegawai */
-    th:nth-child(4), td:nth-child(4) { width: 8%; }   /* Status */
-    th:nth-child(5), td:nth-child(5) { width: 8%; }   /* Masuk */
-    th:nth-child(6), td:nth-child(6) { width: 8%; }   /* Pulang */
-    th:nth-child(7), td:nth-child(7) { width: 11%; }  /* Terlambat */
-    th:nth-child(8), td:nth-child(8) { width: 9%; }   /* F.Masuk */
-    th:nth-child(9), td:nth-child(9) { width: 9%; }   /* F.Pulang */
+    th:nth-child(1), td:nth-child(1) { width: 9%; }   
+    th:nth-child(2), td:nth-child(2) { width: 15%; }  
+    th:nth-child(3), td:nth-child(3) { width: 23%; }  
+    th:nth-child(4), td:nth-child(4) { width: 8%; }   
+    th:nth-child(5), td:nth-child(5) { width: 8%; }   
+    th:nth-child(6), td:nth-child(6) { width: 8%; }   
+    th:nth-child(7), td:nth-child(7) { width: 11%; }  
+    th:nth-child(8), td:nth-child(8) { width: 9%; }   
+    th:nth-child(9), td:nth-child(9) { width: 9%; }   
 
     th { background: var(--admin-color); color: white; padding: 12px 6px; font-weight: 600; text-align: left; }
     td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; word-wrap: break-word; white-space: normal; } 
     tr:nth-child(even) { background: #f8fafc; }
     .text-center { text-align: center; }
     
-    /* PREVIEW THUMBNAIL MINI */
     .img-preview-table { 
       width: 42px; 
       height: 42px; 
@@ -296,13 +292,16 @@
     }
 
     // =====================================================
-    // FIXED: ALUR BARU EKSTRAKSI ENDPOINT THUMBNAIL DRIVE
+    // FIXED: REGEX OPTIMAL UNTUK PARSING FORMAT ID &id= /uc?id=
     // =====================================================
     function konversiKeDirectLinkDrive(urlDrive) {
       if (!urlDrive || urlDrive.trim() === "" || urlDrive === "-") return "";
       
       let fileId = "";
+      
+      // Menggunakan pencarian URL universal dinamis untuk segala model url drive di spreadsheet
       if (urlDrive.includes("id=")) {
+        // Memotong setelah kata 'id=' dan membersihkan sisa parameter ampersand di belakangnya
         fileId = urlDrive.split("id=")[1].split("&")[0];
       } else if (urlDrive.includes("/d/")) {
         fileId = urlDrive.split("/d/")[1].split("/")[0];
@@ -310,18 +309,16 @@
         fileId = urlDrive.split("file/d/")[1].split("/")[0];
       }
       
-      if (fileId) {
-        // Menggunakan rendering resmi g-thumbnail khusus bypass pembatasan domain eksternal
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+      if (fileId && fileId.trim() !== "") {
+        // Menggunakan standard render bypass resmi milik Google User Content Hosting (lh3)
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
       }
       return urlDrive;
     }
 
     function bukaPopUpFoto(urlDirect, namaPegawai, tipeAbsen) {
-      // Mengubah parameter sz=w200 menjadi sz=w600 pada modal pop-up agar gambar resolusi tajam
-      const urlHighRes = urlDirect.replace("&sz=w200", "&sz=w600");
       const modal = document.getElementById("imagePopUpModal");
-      document.getElementById("modalTargetImg").src = urlHighRes;
+      document.getElementById("modalTargetImg").src = urlDirect;
       document.getElementById("modalTargetLabel").innerText = `${namaPegawai} (${tipeAbsen})`;
       modal.style.display = "flex";
     }
@@ -369,11 +366,11 @@
             const urlPulangValid = konversiKeDirectLinkDrive(item.fotoPulang);
 
             const tagFotoMasuk = urlMasukValid 
-              ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik detail foto" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Error'" onclick="bukaPopUpFoto('${urlMasukValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO MASUK')">` 
+              ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik detail foto" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlMasukValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO MASUK')">` 
               : "-";
               
             const tagFotoPulang = urlPulangValid 
-              ? `<img src="${urlPulangValid}" class="img-preview-table" title="Klik detail foto" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Error'" onclick="bukaPopUpFoto('${urlPulangValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO PULANG')">` 
+              ? `<img src="${urlPulangValid}" class="img-preview-table" title="Klik detail foto" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlPulangValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO PULANG')">` 
               : "-";
             
             let teksTerlambat = "Tepat Waktu", warnaTerlambat = "inherit";
