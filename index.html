@@ -19,7 +19,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gradient); min-height: 100vh; color: #fff; padding: 15px; }
     
-    /* Lebar kontainer adaptif penuh agar memaksimalkan ruang monitor desktop */
     .container { max-width: 100%; width: 98%; margin: 0 auto; }
     
     header { text-align: center; margin-bottom: 20px; }
@@ -46,20 +45,38 @@
     button { width: 100%; padding: 14px; background: var(--admin-color); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 15px; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
     button:hover { background: var(--admin-dark); }
     
-    /* RESPONSIVE TRICK: Mematikan overflow scroll luar, mengunci lebar via persentase proporsional */
-    .table-responsive { width: 100%; overflow-x: hidden; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-top: 15px; }
+    /* Tombol Khusus Ekspor Excel */
+    .btn-excel {
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background-color: #107c41; /* Warna hijau khas Excel Microsoft */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 20px;
+      margin-bottom: 5px;
+      transition: background 0.2s;
+    }
+    .btn-excel:hover { background-color: #0b592e; }
+
+    .table-responsive { width: 100%; overflow-x: hidden; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-top: 10px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; } 
     
-    /* AKUMULASI PAS 100% - Menghilangkan baris geser secara total */
-    th:nth-child(1), td:nth-child(1) { width: 9%; }   /* Tanggal */
-    th:nth-child(2), td:nth-child(2) { width: 15%; }  /* NIP */
-    th:nth-child(3), td:nth-child(3) { width: 23%; }  /* Nama Pegawai */
-    th:nth-child(4), td:nth-child(4) { width: 8%; }   /* Status */
-    th:nth-child(5), td:nth-child(5) { width: 8%; }   /* Masuk */
-    th:nth-child(6), td:nth-child(6) { width: 8%; }   /* Pulang */
-    th:nth-child(7), td:nth-child(7) { width: 11%; }  /* Terlambat */
-    th:nth-child(8), td:nth-child(8) { width: 9%; }   /* F.Masuk */
-    th:nth-child(9), td:nth-child(9) { width: 9%; }   /* F.Pulang */
+    th:nth-child(1), td:nth-child(1) { width: 9%; }   
+    th:nth-child(2), td:nth-child(2) { width: 15%; }  
+    th:nth-child(3), td:nth-child(3) { width: 23%; }  
+    th:nth-child(4), td:nth-child(4) { width: 8%; }   
+    th:nth-child(5), td:nth-child(5) { width: 8%; }   
+    th:nth-child(6), td:nth-child(6) { width: 8%; }   
+    th:nth-child(7), td:nth-child(7) { width: 11%; }  
+    th:nth-child(8), td:nth-child(8) { width: 9%; }   
+    th:nth-child(9), td:nth-child(9) { width: 9%; }   
 
     th { background: var(--admin-color); color: white; padding: 12px 6px; font-weight: 600; text-align: left; }
     td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; word-wrap: break-word; white-space: normal; } 
@@ -83,7 +100,7 @@
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 15px; }
     .status-badge { padding: 3px 6px; border-radius: 5px; font-weight: bold; font-size: 11px; display: inline-block; }
 
-    /* ================= STYLING POP-UP MODAL DETAIL FOTO ================= */
+    /* POP-UP MODAL PANEL DETAIL FOTO */
     .photo-modal {
       display: none;
       position: fixed;
@@ -100,7 +117,7 @@
       padding: 15px;
       border-radius: 16px;
       position: relative;
-      max-width: 400px; /* Ukuran pop-up yang ideal, tidak memenuni layar laptop */
+      max-width: 400px;
       width: 85%;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
       text-align: center;
@@ -142,7 +159,6 @@
       align-items: center;
       justify-content: center;
     }
-    .close-modal-btn:hover { background: #c53030; }
 
     .view-panel { display: none; }
   </style>
@@ -195,8 +211,12 @@
 
         <button onclick="tarikLaporanAdmin()">PROSES DATA REKAP</button>
 
+        <div style="text-align: right;">
+          <button class="btn-excel" onclick="exportKeExcelLaporan()"> Excel &nbsp;📥 EXPORT TO EXCEL</button>
+        </div>
+
         <div class="table-responsive">
-          <table>
+          <table id="tabelLaporanAdminUtama">
             <thead>
               <tr>
                 <th>Tanggal</th>
@@ -242,6 +262,7 @@
     const API = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
     const adminAktif = "System Admin";
     let daftarPegawaiCache = [];
+    let dataLaporanSekarang = []; // Menyimpan data aktif untuk kebutuhan ekspor
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
@@ -295,9 +316,6 @@
       } catch(e) { console.error(e); }
     }
 
-    // =====================================================
-    // FIXED PARSING: Mampu mengekstrak format ampersand (&id=) database
-    // =====================================================
     function konversiKeDirectLinkDrive(urlDrive) {
       if (!urlDrive || urlDrive.trim() === "" || urlDrive === "-") return "";
       
@@ -311,13 +329,11 @@
       }
       
       if (fileId && fileId.trim() !== "") {
-        // Menggunakan rendering resolusi tinggi bawaan Google Drive yang aman dari CORS
         return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
       }
       return urlDrive;
     }
 
-    // INTERAKSI POP-UP MODAL ENGINE
     function bukaPopUpFoto(urlDirect, namaPegawai, tipeAbsen) {
       const modal = document.getElementById("imagePopUpModal");
       document.getElementById("modalTargetImg").src = urlDirect;
@@ -344,6 +360,7 @@
       showLoading(true);
       const tbody = document.getElementById("bodyLaporanAdmin");
       tbody.innerHTML = '<tr><td colspan="9" class="text-center">Sinkronisasi data rekap...</td></tr>';
+      dataLaporanSekarang = [];
 
       try {
         const res = await fetch(API + paramQuery);
@@ -362,13 +379,14 @@
             return a.nama.localeCompare(b.nama);
           });
 
+          dataLaporanSekarang = data.data;
+
           data.data.forEach(item => {
             const tr = document.createElement("tr");
             
             const urlMasukValid = konversiKeDirectLinkDrive(item.fotoMasuk);
             const urlPulangValid = konversiKeDirectLinkDrive(item.fotoPulang);
 
-            // Trigger fungsi bukaPopUpFoto() saat gambar pratinjau diklik
             const tagFotoMasuk = urlMasukValid 
               ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik untuk memperbesar" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlMasukValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO MASUK')">` 
               : "-";
@@ -407,6 +425,105 @@
       } finally { 
         showLoading(false); 
       }
+    }
+
+    // =====================================================
+    // FUNGSIONALITAS UTAMA: EXPORT DATA LAPORAN KE MS. EXCEL
+    // =====================================================
+    function exportKeExcelLaporan() {
+      if (dataLaporanSekarang.length === 0) {
+        alert("Tidak ada data laporan aktif yang dapat diekspor! Silakan lakukan proses saringan data terlebih dahulu.");
+        return;
+      }
+
+      const tipeFilter = document.getElementById("filterType").value.toUpperCase();
+      
+      // 1. Membentuk Header Struktur XML Excel dengan CSS dasar
+      let excelTemplate = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; }
+            .judul { font-size: 16px; font-weight: bold; text-align: center; color: #1a365d; }
+            .subjudul { font-size: 11px; text-align: center; color: #4a5568; margin-bottom: 10px; }
+            th { background-color: #2b6cb0; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #cbd5e0; padding: 8px; }
+            td { border: 1px solid #e2e8f0; padding: 6px; vertical-align: middle; }
+            .text-center { text-align: center; }
+            .text-bold { font-weight: bold; }
+            .terlambat-cell { color: #e53e3e; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr><td colspan="9" class="judul">LAPORAN REKAPITULASI PRESENSI PEGAWAI</td></tr>
+            <tr><td colspan="9" class="judul">KPU KOTA MALANG</td></tr>
+            <tr><td colspan="9" class="subjudul">Metode Penarikan: REKAP ${tipeFilter} | Waktu Ekspor: ${new Date().toLocaleString('id-ID')}</td></tr>
+            <tr><td colspan="9"></td></tr>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>NIP Pegawai</th>
+                <th>Nama Lengkap Pegawai</th>
+                <th>Status Kehadiran</th>
+                <th>Jam Masuk</th>
+                <th>Jam Pulang</th>
+                <th>Keterangan Terlambat</th>
+                <th>Link Foto Masuk</th>
+                <th>Link Foto Pulang</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      // 2. Iterasi memasukkan data laporan aktif ke dalam baris tabel Excel
+      dataLaporanSekarang.forEach(item => {
+        let teksTerlambat = "Tepat Waktu";
+        let styleTerlambat = "";
+        if (item.keterangan && item.keterangan !== "0" && item.keterangan !== "-") {
+          teksTerlambat = isNaN(item.keterangan) ? item.keterangan : item.keterangan + " Menit";
+          styleTerlambat = 'class="terlambat-cell"';
+        }
+
+        // Memastikan format NIP diekspor sebagai Teks biasa agar tidak rusak di Excel (ditambahkan tanda petik satu didepan)
+        const formatNIP = `'${item.nip}`;
+
+        excelTemplate += `
+          <tr>
+            <td class="text-center">${item.tanggal}</td>
+            <td class="text-center" style="mso-number-format:'\\@';">${formatNIP}</td>
+            <td class="text-bold">${item.nama}</td>
+            <td class="text-center">${item.jenis}</td>
+            <td class="text-center">${item.jamMasuk}</td>
+            <td class="text-center">${item.jamPulang}</td>
+            <td class="text-center" ${styleTerlambat}>${teksTerlambat}</td>
+            <td>${item.fotoMasuk && item.fotoMasuk !== '-' ? item.fotoMasuk : '-'}</td>
+            <td>${item.fotoPulang && item.fotoPulang !== '-' ? item.fotoPulang : '-'}</td>
+          </tr>
+        `;
+      });
+
+      // 3. Menutup berkas kode tabel HTML
+      excelTemplate += `
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      // 4. Proses konversi template kode ke Blob data untuk diunduh langsung di peramban
+      const blobKeExcel = new Blob([excelTemplate], { type: "application/vnd.ms-excel;charset=utf-8;" });
+      const urlFileExcel = URL.createObjectURL(blobKeExcel);
+      
+      // 5. Membuat trigger tautan download berkas (.xls) secara otomatis
+      const linkDownload = document.createElement("a");
+      linkDownload.href = urlFileExcel;
+      linkDownload.removeAttribute("download");
+      linkDownload.setAttribute("download", `REKAP_PRESENSI_KPU_MALANG_${tipeFilter}_${new Date().toISOString().slice(0,10)}.xls`);
+      
+      document.body.appendChild(linkDownload);
+      linkDownload.click();
+      document.body.removeChild(linkDownload);
     }
 
     async function kirimManualAdmin() {
