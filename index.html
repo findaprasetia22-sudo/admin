@@ -50,8 +50,18 @@
     tr:nth-child(even) { background: #f8fafc; }
     .text-center { text-align: center; }
     
-    .img-preview-table { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e0; cursor: pointer; transition: transform 0.2s; display: block; margin: 0 auto; }
-    .img-preview-table:hover { transform: scale(1.15); border-color: var(--admin-color); }
+    .img-preview-table { 
+      width: 55px; 
+      height: 55px; 
+      object-fit: cover; 
+      border-radius: 8px; 
+      border: 1.5px solid #cbd5e0; 
+      cursor: pointer; 
+      transition: transform 0.2s, border-color 0.2s; 
+      display: block; 
+      margin: 0 auto; 
+    }
+    .img-preview-table:hover { transform: scale(1.2); border-color: var(--admin-color); }
     
     .operator-badge { background: #feebc8; color: #c05621; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 16px; }
@@ -79,21 +89,19 @@
         
         <label for="filterType">Metode Penarikan</label>
         <select id="filterType" onchange="toggleFilterFields()">
-          <option value="harian">Laporan Harian</option>
-          <option value="bulanan" selected>Laporan Bulanan</option>
+          <option value="harian" selected>Laporan Harian</option> <option value="bulanan">Laporan Bulanan</option>
           <option value="custom">Kustom Rentang Tanggal (Custom Date)</option>
         </select>
 
         <div class="filter-group">
-          <div id="div-tglAwal" style="display:none;">
-            <label id="lbl-tglAwal">Pilih Tanggal</label>
+          <div id="div-tglAwal" style="display:block;"> <label id="lbl-tglAwal">Pilih Tanggal</label>
             <input type="date" id="filterTglAwal">
           </div>
           <div id="div-tglAkhir" style="display:none;">
             <label>Sampai Tanggal</label>
             <input type="date" id="filterTglAkhir">
           </div>
-          <div id="div-bulan">
+          <div id="div-bulan" style="display:none;">
             <label>Pilih Bulan & Tahun</label>
             <input type="month" id="filterBulan">
           </div>
@@ -118,7 +126,7 @@
             </thead>
             <tbody id="bodyLaporanAdmin">
               <tr>
-                <td colspan="9" class="text-center" style="color:#a0aec0; padding:25px;">Data sedang disinkronkan... Klik tombol "Proses Data Rekap" untuk memuat ulang data.</td>
+                <td colspan="9" class="text-center" style="color:#a0aec0; padding:25px;">Data sedang disinkronkan... Mohon tunggu...</td>
               </tr>
             </tbody>
           </table>
@@ -146,7 +154,7 @@
         <label for="inputKeterangan">Keterangan Tambahan / Alasan</label>
         <textarea id="inputKeterangan" rows="3" placeholder="Tuliskan keterangan detail alasan ketidakhadiran pegawai..."></textarea>
 
-        <button onclick="kirimManualAdmin()" style="background: var(--success);">SIMPAN DATA PRESENSI</button>
+        <button onclick="kirimManualAdmin()" style="background: var(--success);">SIMPAN DATA ABSENSI</button>
       </div>
 
     </div>
@@ -161,22 +169,24 @@
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
     // =====================================================
-    // INIT LOAD (OTOMATIS BERJALAN SAAT HALAMAN DIBUKA)
+    // INIT LOAD: DEFAULT DATA LANGSUNG MENGARAH KE HARI INI
     // =====================================================
     async function initAdminDashboard() {
-      // 1. Set default saringan ke bulan berjalan saat ini
       const kini = new Date();
-      const bln = String(kini.getMonth() + 1).padStart(2, '0');
-      document.getElementById("filterBulan").value = `${kini.getFullYear()}-${bln}`;
       
-      // 2. Tarik master data nama pegawai untuk dropdown
+      // Setup format YYYY-MM-DD untuk default tanggal hari ini
+      const yyyy = kini.getFullYear();
+      const mm = String(kini.getMonth() + 1).padStart(2, '0');
+      const dd = String(kini.getDate()).padStart(2, '0');
+      
+      document.getElementById("filterTglAwal").value = `${yyyy}-${mm}-${dd}`;
+      document.getElementById("filterBulan").value = `${yyyy}-${mm}`;
+      
+      // Sinkronkan data master dropdown & otomatis jalankan pencarian harian hari ini
       await muatDaftarPegawaiAdmin();
-
-      // 3. Langsung eksekusi pemuatan data laporan bulan berjalan
       tarikLaporanAdmin();
     }
     
-    // Jalankan inisialisasi otomatis
     window.addEventListener('DOMContentLoaded', initAdminDashboard);
 
     function switchAdminTab(target) {
@@ -215,14 +225,27 @@
             select.appendChild(opt);
           });
         }
-      } catch(e) { 
-        console.error("Gagal memuat master data pegawai: " + e.message); 
-      }
+      } catch(e) { console.error(e); }
     }
 
-    // =====================================================
-    // TARIK LAPORAN REKAPITULASI
-    // =====================================================
+    function konversiKeDirectLinkDrive(urlDrive) {
+      if (!urlDrive || urlDrive.trim() === "" || urlDrive === "-") return "";
+      
+      let fileId = "";
+      if (urlDrive.includes("id=")) {
+        fileId = urlDrive.split("id=")[1].split("&")[0];
+      } else if (urlDrive.includes("/d/")) {
+        fileId = urlDrive.split("/d/")[1].split("/")[0];
+      } else if (urlDrive.includes("file/d/")) {
+        fileId = urlDrive.split("file/d/")[1].split("/")[0];
+      }
+      
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
+      }
+      return urlDrive;
+    }
+
     async function tarikLaporanAdmin() {
       const type = document.getElementById("filterType").value;
       const tglAwal = document.getElementById("filterTglAwal").value;
@@ -233,11 +256,11 @@
       if(type === "harian" && tglAwal) paramQuery += `&tglAwal=${tglAwal}`;
       else if(type === "bulanan" && bulan) paramQuery += `&bulan=${bulan}`;
       else if(type === "custom" && tglAwal && tglAkhir) paramQuery += `&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`;
-      else { alert("Lengkapi parameter tanggal filter terlebih dahulu!"); return; }
+      else { alert("Lengkapi parameter rentang saringan tanggal!"); return; }
 
       showLoading(true);
       const tbody = document.getElementById("bodyLaporanAdmin");
-      tbody.innerHTML = '<tr><td colspan="9" class="text-center">Memproses sinkronisasi rekap data...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center">Sinkronisasi data rekap...</td></tr>';
 
       try {
         const res = await fetch(API + paramQuery);
@@ -245,14 +268,34 @@
         if(data.result === "success") {
           tbody.innerHTML = "";
           if(data.data.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--danger); padding:15px;">Data kosong. Tidak ada rekaman presensi pada periode ini.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--danger); padding:15px;">Tidak ditemukan data presensi pada periode/tanggal ini.</td></tr>'; 
             return; 
           }
           
+          // Urutkan data: Tanggal (Ascending) lalu Nama (Ascending)
+          data.data.sort((a, b) => {
+            const dateA = a.tanggal.split('/').reverse().join('');
+            const dateB = b.tanggal.split('/').reverse().join('');
+            
+            if (dateA !== dateB) {
+              return dateA.localeCompare(dateB);
+            }
+            return a.nama.localeCompare(b.nama);
+          });
+
           data.data.forEach(item => {
             const tr = document.createElement("tr");
-            const tagFotoMasuk = item.fotoMasuk ? `<img src="${item.fotoMasuk}" class="img-preview-table" title="Perbesar Foto Masuk" onclick="window.open('${item.fotoMasuk}', '_blank')">` : "-";
-            const tagFotoPulang = item.fotoPulang ? `<img src="${item.fotoPulang}" class="img-preview-table" title="Perbesar Foto Pulang" onclick="window.open('${item.fotoPulang}', '_blank')">` : "-";
+            
+            const urlMasukValid = konversiKeDirectLinkDrive(item.fotoMasuk);
+            const urlPulangValid = konversiKeDirectLinkDrive(item.fotoPulang);
+
+            const tagFotoMasuk = urlMasukValid 
+              ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik untuk melihat resolusi penuh" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Foto+Drive' " onclick="window.open('${item.fotoMasuk}', '_blank')">` 
+              : "-";
+              
+            const tagFotoPulang = urlPulangValid 
+              ? `<img src="${urlPulangValid}" class="img-preview-table" title="Klik untuk melihat resolusi penuh" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Foto+Drive' " onclick="window.open('${item.fotoPulang}', '_blank')">` 
+              : "-";
             
             let teksTerlambat = "Tepat Waktu", warnaTerlambat = "inherit";
             if (item.keterangan && item.keterangan !== "0" && item.keterangan !== "-") {
@@ -280,15 +323,12 @@
           });
         }
       } catch(e) { 
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="color:var(--danger);">Gagal memuat rekap. Periksa koneksi atau deploy GAS Anda.</td></tr>`; 
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="color:var(--danger);">Gagal memuat rekap data. Periksa kembali konfigurasi API.</td></tr>`; 
       } finally { 
         showLoading(false); 
       }
     }
 
-    // =====================================================
-    // KIRIM INPUT MANUAL ABSENSI
-    // =====================================================
     async function kirimManualAdmin() {
       const nip = document.getElementById("inputPegawai").value, tanggal = document.getElementById("inputTanggal").value;
       const jenis = document.getElementById("inputJenis").value, keterangan = document.getElementById("inputKeterangan").value;
@@ -310,10 +350,10 @@
           document.getElementById("inputTanggal").value = ""; 
           document.getElementById("inputKeterangan").value = ""; 
           document.getElementById("inputPegawai").value = ""; 
-          tarikLaporanAdmin(); // Refresh tabel setelah input manual sukses
+          tarikLaporanAdmin();
         }
       } catch(e) { 
-        alert("Gagal menyimpan data input manual admin."); 
+        alert("Gagal menyimpan data input manual."); 
       } finally { 
         showLoading(false); 
       }
