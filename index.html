@@ -19,8 +19,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gradient); min-height: 100vh; color: #fff; padding: 15px; }
     
-    /* DIOPTIMALKAN: Lebar container dinaikkan agar tabel memiliki ruang horizontal yang luas */
-    .container { max-width: 1250px; margin: 0 auto; }
+    /* Lebar kontainer adaptif penuh agar memaksimalkan ruang monitor desktop */
+    .container { max-width: 100%; width: 98%; margin: 0 auto; }
     
     header { text-align: center; margin-bottom: 20px; }
     header h1 { font-size: 24px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -35,7 +35,7 @@
     .nav-item.active { background: #fff; color: var(--admin-color); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
     .card { background: #ffffff; color: var(--text-dark); padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
-    <h3> { color: var(--admin-color); margin-bottom: 15px; text-transform: uppercase; border-bottom: 2px solid #edf2f7; padding-bottom: 8px; font-size: 16px; letter-spacing: 0.5px; }
+    h3 { color: var(--admin-color); margin-bottom: 15px; text-transform: uppercase; border-bottom: 2px solid #edf2f7; padding-bottom: 8px; font-size: 16px; letter-spacing: 0.5px; }
     
     label { font-size: 13px; font-weight: 600; color: #4a5568; display: block; margin-top: 10px; margin-bottom: 5px; }
     select, input, textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; background: var(--gray-light); color: var(--text-dark); font-family: inherit; }
@@ -46,30 +46,29 @@
     button { width: 100%; padding: 14px; background: var(--admin-color); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 15px; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
     button:hover { background: var(--admin-dark); }
     
-    /* DIOPTIMALKAN: Memaksa tabel agar muat penuh tanpa scrollbar horizontal jika layar monitor memadai */
-    .table-responsive { width: 100%; overflow-x: visible; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-top: 15px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; } /* Menggunakan fixed layout kontrol lebar kolom */
+    /* RESPONSIVE TRICK: Mematikan overflow scroll luar, mengunci lebar via persentase proporsional */
+    .table-responsive { width: 100%; overflow-x: hidden; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; } 
     
-    /* DIOPTIMALKAN: Pengaturan lebar kolom spesifik agar proporsional dan tidak melebar acak */
-    th:nth-child(1), td:nth-child(1) { width: 95px; }  /* Tanggal */
-    th:nth-child(2), td:nth-child(2) { width: 145px; } /* NIP */
-    th:nth-child(3), td:nth-child(3) { width: 170px; } /* Nama */
-    th:nth-child(4), td:nth-child(4) { width: 75px; }  /* Status */
-    th:nth-child(5), td:nth-child(5) { width: 85px; }  /* Jam Masuk */
-    th:nth-child(6), td:nth-child(6) { width: 85px; }  /* Jam Pulang */
-    th:nth-child(7), td:nth-child(7) { width: 95px; }  /* Terlambat */
-    th:nth-child(8), td:nth-child(8) { width: 75px; }  /* Foto Masuk */
-    th:nth-child(9), td:nth-child(9) { width: 75px; }  /* Foto Pulang */
+    /* AKUMULASI PAS 100% - Menghilangkan baris geser secara total */
+    th:nth-child(1), td:nth-child(1) { width: 9%; }   /* Tanggal */
+    th:nth-child(2), td:nth-child(2) { width: 15%; }  /* NIP */
+    th:nth-child(3), td:nth-child(3) { width: 23%; }  /* Nama Pegawai */
+    th:nth-child(4), td:nth-child(4) { width: 8%; }   /* Status */
+    th:nth-child(5), td:nth-child(5) { width: 8%; }   /* Masuk */
+    th:nth-child(6), td:nth-child(6) { width: 8%; }   /* Pulang */
+    th:nth-child(7), td:nth-child(7) { width: 11%; }  /* Terlambat */
+    th:nth-child(8), td:nth-child(8) { width: 9%; }   /* F.Masuk */
+    th:nth-child(9), td:nth-child(9) { width: 9%; }   /* F.Pulang */
 
-    th { background: var(--admin-color); color: white; padding: 10px 8px; font-weight: 600; text-align: left; }
-    td { padding: 8px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; word-wrap: break-word; white-space: normal; } /* white-space normal agar teks membungkus */
+    th { background: var(--admin-color); color: white; padding: 12px 6px; font-weight: 600; text-align: left; }
+    td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; word-wrap: break-word; white-space: normal; } 
     tr:nth-child(even) { background: #f8fafc; }
     .text-center { text-align: center; }
     
-    /* DIOPTIMALKAN: Ukuran pratinjau disesuaikan agar hemat tempat namun tetap terlihat jelas */
     .img-preview-table { 
-      width: 45px; 
-      height: 45px; 
+      width: 42px; 
+      height: 42px; 
       object-fit: cover; 
       border-radius: 6px; 
       border: 1.5px solid #cbd5e0; 
@@ -78,11 +77,72 @@
       display: block; 
       margin: 0 auto; 
     }
-    .img-preview-table:hover { transform: scale(1.3); z-index: 10; position: relative; }
+    .img-preview-table:hover { transform: scale(1.25); z-index: 10; position: relative; }
     
     .operator-badge { background: #feebc8; color: #c05621; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 15px; display: inline-block; }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 15px; }
     .status-badge { padding: 3px 6px; border-radius: 5px; font-weight: bold; font-size: 11px; display: inline-block; }
+
+    /* ================= STYLING POP-UP MODAL DETAIL FOTO ================= */
+    .photo-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.65);
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-content-card {
+      background: white;
+      padding: 15px;
+      border-radius: 16px;
+      position: relative;
+      max-width: 400px; /* Ukuran pop-up yang ideal, tidak memenuni layar laptop */
+      width: 85%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      text-align: center;
+      animation: zoomInAnim 0.2s ease-out;
+    }
+    @keyframes zoomInAnim {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-image {
+      width: 100%;
+      height: auto;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f7fafc;
+    }
+    .modal-info-text {
+      color: var(--text-dark);
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .close-modal-btn {
+      position: absolute;
+      top: -10px; right: -10px;
+      background: var(--danger);
+      color: white;
+      border: 2px solid white;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-modal-btn:hover { background: #c53030; }
 
     .view-panel { display: none; }
   </style>
@@ -91,8 +151,15 @@
 
   <div class="loading-overlay" id="loading">Sinkronisasi Basis Data Eksternal... Mohon Tunggu...</div>
 
+  <div class="photo-modal" id="imagePopUpModal" onclick="tutupPopUpFoto()">
+    <div class="modal-content-card" onclick="event.stopPropagation()">
+      <button class="close-modal-btn" onclick="tutupPopUpFoto()">✕</button>
+      <img src="" class="modal-image" id="modalTargetImg" alt="Detail Presensi">
+      <div class="modal-info-text" id="modalTargetLabel">Nama Pegawai</div>
+    </div>
+  </div>
+
   <div class="container">
-    
     <div id="view-admin-main" style="display: block;">
       <div class="operator-badge" id="badgeOperator">Sesi Aktif Admin: System Admin</div>
 
@@ -154,34 +221,25 @@
 
       <div class="card view-panel" id="panel-input">
         <h3>Formulir Input Ketidakhadiran Pegawai</h3>
-        
         <label for="inputPegawai">Pilih Pegawai yang Berhalangan</label>
-        <select id="inputPegawai">
-          <option value="">-- Mohon Tunggu, Memuat Data... --</option>
-        </select>
-
+        <select id="inputPegawai"><option value="">-- Mohon Tunggu, Memuat Data... --</option></select>
         <label for="inputTanggal">Pilih Tanggal Berlaku</label>
         <input type="date" id="inputTanggal">
-
         <label for="inputJenis">Status Ketidakhadiran</label>
         <select id="inputJenis">
           <option value="CUTI">CUTI TAHUNAN / KHUSUS</option>
           <option value="IJIN">IJIN KELUAR / DINAS LUAR</option>
           <option value="SAKIT">SAKIT (DENGAN SURAT DOKTER)</option>
         </select>
-
         <label for="inputKeterangan">Keterangan Tambahan / Alasan</label>
-        <textarea id="inputKeterangan" rows="3" placeholder="Tuliskan keterangan detail alasan ketidakhadiran pegawai..."></textarea>
-
+        <textarea id="inputKeterangan" rows="3" placeholder="Tuliskan keterangan detail..."></textarea>
         <button onclick="kirimManualAdmin()" style="background: var(--success);">SIMPAN DATA ABSENSI</button>
       </div>
-
     </div>
   </div>
 
   <script>
     const API = "https://script.google.com/macros/s/AKfycbwx1pMmMPnnrjZUBWDAqvD76kV1blXAA74u6R6G4nT5U-txQdHUZyP6en7WZNkBHLIROQ/exec";
-    
     const adminAktif = "System Admin";
     let daftarPegawaiCache = [];
 
@@ -192,14 +250,11 @@
       const yyyy = kini.getFullYear();
       const mm = String(kini.getMonth() + 1).padStart(2, '0');
       const dd = String(kini.getDate()).padStart(2, '0');
-      
       document.getElementById("filterTglAwal").value = `${yyyy}-${mm}-${dd}`;
       document.getElementById("filterBulan").value = `${yyyy}-${mm}`;
-      
       await muatDaftarPegawaiAdmin();
       tarikLaporanAdmin();
     }
-    
     window.addEventListener('DOMContentLoaded', initAdminDashboard);
 
     function switchAdminTab(target) {
@@ -207,7 +262,6 @@
       document.getElementById('panel-input').style.display = 'none';
       document.getElementById('tab-laporan').classList.remove('active');
       document.getElementById('tab-input').classList.remove('active');
-
       if (target === 'laporan') {
         document.getElementById('panel-laporan').style.display = 'block';
         document.getElementById('tab-laporan').classList.add('active');
@@ -242,7 +296,7 @@
     }
 
     // =====================================================
-    // DIOPTIMALKAN: ENDPOINT RESMI PENAYANGAN THUMBNAIL GOOGLE DRIVE
+    // FIXED PARSING: Mampu mengekstrak format ampersand (&id=) database
     // =====================================================
     function konversiKeDirectLinkDrive(urlDrive) {
       if (!urlDrive || urlDrive.trim() === "" || urlDrive === "-") return "";
@@ -256,11 +310,23 @@
         fileId = urlDrive.split("file/d/")[1].split("/")[0];
       }
       
-      if (fileId) {
-        // Endpoint resmi bypass pelarangan hotlinking eksternal
-        return `https://lh3.googleusercontent.com/d/${fileId}=s150`;
+      if (fileId && fileId.trim() !== "") {
+        // Menggunakan rendering resolusi tinggi bawaan Google Drive yang aman dari CORS
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
       }
       return urlDrive;
+    }
+
+    // INTERAKSI POP-UP MODAL ENGINE
+    function bukaPopUpFoto(urlDirect, namaPegawai, tipeAbsen) {
+      const modal = document.getElementById("imagePopUpModal");
+      document.getElementById("modalTargetImg").src = urlDirect;
+      document.getElementById("modalTargetLabel").innerText = `${namaPegawai} (${tipeAbsen})`;
+      modal.style.display = "flex";
+    }
+
+    function tutupPopUpFoto() { 
+      document.getElementById("imagePopUpModal").style.display = "none"; 
     }
 
     async function tarikLaporanAdmin() {
@@ -273,7 +339,7 @@
       if(type === "harian" && tglAwal) paramQuery += `&tglAwal=${tglAwal}`;
       else if(type === "bulanan" && bulan) paramQuery += `&bulan=${bulan}`;
       else if(type === "custom" && tglAwal && tglAkhir) paramQuery += `&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`;
-      else { alert("Lengkapi parameter rentang saringan tanggal!"); return; }
+      else { alert("Lengkapi parameter tanggal!"); return; }
 
       showLoading(true);
       const tbody = document.getElementById("bodyLaporanAdmin");
@@ -285,11 +351,10 @@
         if(data.result === "success") {
           tbody.innerHTML = "";
           if(data.data.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--danger); padding:15px;">Tidak ditemukan data presensi pada periode/tanggal ini.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--danger); padding:15px;">Tidak ditemukan data presensi pada periode ini.</td></tr>'; 
             return; 
           }
           
-          // Urutkan data: Tanggal (Ascending) lalu Nama (Ascending)
           data.data.sort((a, b) => {
             const dateA = a.tanggal.split('/').reverse().join('');
             const dateB = b.tanggal.split('/').reverse().join('');
@@ -303,12 +368,13 @@
             const urlMasukValid = konversiKeDirectLinkDrive(item.fotoMasuk);
             const urlPulangValid = konversiKeDirectLinkDrive(item.fotoPulang);
 
+            // Trigger fungsi bukaPopUpFoto() saat gambar pratinjau diklik
             const tagFotoMasuk = urlMasukValid 
-              ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik untuk melihat resolusi penuh" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Error' " onclick="window.open('${item.fotoMasuk}', '_blank')">` 
+              ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik untuk memperbesar" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlMasukValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO MASUK')">` 
               : "-";
               
             const tagFotoPulang = urlPulangValid 
-              ? `<img src="${urlPulangValid}" class="img-preview-table" title="Klik untuk melihat resolusi penuh" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Error' " onclick="window.open('${item.fotoPulang}', '_blank')">` 
+              ? `<img src="${urlPulangValid}" class="img-preview-table" title="Klik untuk memperbesar" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlPulangValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO PULANG')">` 
               : "-";
             
             let teksTerlambat = "Tepat Waktu", warnaTerlambat = "inherit";
@@ -366,11 +432,7 @@
           document.getElementById("inputPegawai").value = ""; 
           tarikLaporanAdmin();
         }
-      } catch(e) { 
-        alert("Gagal menyimpan data input manual."); 
-      } finally { 
-        showLoading(false); 
-      }
+      } catch(e) { alert("Gagal menyimpan data."); } finally { showLoading(false); }
     }
   </script>
 </body>
