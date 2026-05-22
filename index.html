@@ -55,17 +55,16 @@
     .table-responsive { width: 100%; overflow-x: hidden; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-top: 10px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; } 
     
-    /* PENYESUAIAN PERSENTASE KOLOM BARU (TOTAL PAS 100%) */
-    th:nth-child(1), td:nth-child(1) { width: 8.5%; } /* Tanggal */
-    th:nth-child(2), td:nth-child(2) { width: 14%; }  /* NIP */
-    th:nth-child(3), td:nth-child(3) { width: 20%; }  /* Nama Pegawai */
-    th:nth-child(4), td:nth-child(4) { width: 7.5%; } /* Status */
-    th:nth-child(5), td:nth-child(5) { width: 7%; }   /* Masuk */
-    th:nth-child(6), td:nth-child(6) { width: 7%; }   /* Pulang */
-    th:nth-child(7), td:nth-child(7) { width: 11.5%; }/* Ket. Masuk */
-    th:nth-child(8), td:nth-child(8) { width: 10.5%; }/* Ket. Pulang (Baru) */
-    th:nth-child(9), td:nth-child(9) { width: 7%; }   /* F.Masuk */
-    th:nth-child(10), td:nth-child(10) { width: 7%; } /* F.Pulang */
+    th:nth-child(1), td:nth-child(1) { width: 8.5%; } 
+    th:nth-child(2), td:nth-child(2) { width: 14%; }  
+    th:nth-child(3), td:nth-child(3) { width: 20%; }  
+    th:nth-child(4), td:nth-child(4) { width: 7.5%; } 
+    th:nth-child(5), td:nth-child(5) { width: 7%; }   
+    th:nth-child(6), td:nth-child(6) { width: 7%; }   
+    th:nth-child(7), td:nth-child(7) { width: 11.5%; }
+    th:nth-child(8), td:nth-child(8) { width: 10.5%; }
+    th:nth-child(9), td:nth-child(9) { width: 7%; }   
+    th:nth-child(10), td:nth-child(10) { width: 7%; } 
 
     th { background: var(--admin-color); color: white; padding: 12px 6px; font-weight: 600; text-align: left; }
     td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; word-wrap: break-word; white-space: normal; } 
@@ -82,7 +81,6 @@
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; font-weight: bold; font-size: 15px; }
     .status-badge { padding: 3px 6px; border-radius: 5px; font-weight: bold; font-size: 11px; display: inline-block; }
 
-    /* POP-UP MODAL PANEL */
     .photo-modal {
       display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%;
       background-color: rgba(0, 0, 0, 0.65); align-items: center; justify-content: center; backdrop-filter: blur(4px);
@@ -204,6 +202,14 @@
     const adminAktif = "System Admin";
     let daftarPegawaiCache = [];
     let dataLaporanSekarang = [];
+    
+    // Objek Konfigurasi Default (Akan otomatis ditimpa jika Apps Script mengirim data dari sheet setting)
+    let jamKerjaSetting = {
+      masukSeninKamis: "08:00",
+      pulangSeninKamis: "16:00",
+      masukJumat: "08:00",
+      pulangJumat: "16:30"
+    };
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
@@ -275,7 +281,6 @@
     }
     function tutupPopUpFoto() { document.getElementById("imagePopUpModal").style.display = "none"; }
 
-    // HELPER: Menghitung selisih menit antara dua string jam "HH:MM"
     function hitungMenitSelisih(waktuAwal, waktuAkhir) {
       const s = waktuAwal.split(":");
       const e = waktuAkhir.split(":");
@@ -284,7 +289,6 @@
       return menitAkhir - menitAwal;
     }
 
-    // HELPER: Mengambil index hari dari format teks dd/MM/yyyy (0 = Minggu, 5 = Jumat)
     function ambilIndexHariDariTglStr(tglStr) {
       const parts = tglStr.split("/");
       const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
@@ -313,6 +317,15 @@
         const data = await res.json();
         if(data.result === "success") {
           tbody.innerHTML = "";
+          
+          // Sinkronisasi data setting jam resmi jika dikirimkan oleh backend Apps Script Anda
+          if(data.settingJam Kerja) {
+            jamKerjaSetting.masukSeninKamis = data.settingJam Kerja.masukSeninKamis || jamKerjaSetting.masukSeninKamis;
+            jamKerjaSetting.pulangSeninKamis = data.settingJam Kerja.pulangSeninKamis || jamKerjaSetting.pulangSeninKamis;
+            jamKerjaSetting.masukJumat = data.settingJam Kerja.masukJumat || jamKerjaSetting.masukJumat;
+            jamKerjaSetting.pulangJumat = data.settingJam Kerja.pulangJumat || jamKerjaSetting.pulangJumat;
+          }
+
           if(data.data.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="color:var(--danger); padding:15px;">Tidak ditemukan data presensi pada periode ini.</td></tr>'; 
             return; 
@@ -334,21 +347,20 @@
             const urlPulangValid = konversiKeDirectLinkDrive(item.fotoPulang);
 
             const tagFotoMasuk = urlMasukValid 
-              ? `<img src="${urlMasukValid}" class="img-preview-table" title="Klik detail" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlMasukValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO MASUK')">` 
+              ? `<img src="${urlMasukValid}" class="img-preview-table" onclick="bukaPopUpFoto('${urlMasukValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO MASUK')">` 
               : "-";
               
             const tagFotoPulang = urlPulangValid 
-              ? `<img src="${urlPulangValid}" class="img-preview-table" title="Klik detail" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Kosong'" onclick="bukaPopUpFoto('${urlPulangValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO PULANG')">` 
+              ? `<img src="${urlPulangValid}" class="img-preview-table" onclick="bukaPopUpFoto('${urlPulangValid}', '${item.nama.replace(/'/g, "\\'")}', 'FOTO PULANG')">` 
               : "-";
             
-            // =====================================================
-            // ENGINE KOMPENSASI LOGIKA MASUK & PULANG DINAMIS
-            // =====================================================
             let txtMasuk = "Tepat Waktu", warnaMasuk = "inherit";
             let txtPulang = "Belum Absen", warnaPulang = "inherit";
             
             const hariIndex = ambilIndexHariDariTglStr(item.tanggal);
-            const jamPulangResmi = (hariIndex === 5) ? "16:30" : "16:00"; // Deteksi Hari Jumat vs Senin-Kamis
+            
+            // MEMBACA ATURAN JAM PULANG BERDASARKAN HASIL DATA SPREADSHEET SHEET SETTING
+            const jamPulangResmi = (hariIndex === 5) ? jamKerjaSetting.pulangJumat : jamKerjaSetting.pulangSeninKamis;
             
             let menitTerlambat = 0;
             if (item.keterangan && item.keterangan !== "0" && item.keterangan !== "-") {
@@ -357,12 +369,12 @@
                 txtMasuk = `Terlambat ${menitTerlambat} Menit`;
                 warnaMasuk = "var(--danger)";
               } else {
-                txtMasuk = item.keterangan; // Handle jika ada teks manual dari admin
+                txtMasuk = item.keterangan;
               }
             }
 
             if (item.jamPulang && item.jamPulang !== "-") {
-              // Hitung kelebihan menit kerja saat pulang dibanding jam resmi
+              // Menghitung selisih durasi kepulangan dengan basis Jam Kerja dari spreadsheet setting
               const kompensasiMenit = hitungMenitSelisih(jamPulangResmi, item.jamPulang);
               
               if (kompensasiMenit >= menitTerlambat) {
@@ -376,7 +388,6 @@
               txtMasuk = "-"; txtPulang = "-";
             }
 
-            // Simpan status kalkulasi terbaru ke object global rekap excel
             item.kalkulasiMasuk = txtMasuk;
             item.kalkulasiPulang = txtPulang;
 
@@ -405,9 +416,6 @@
       } finally { showLoading(false); }
     }
 
-    // =====================================================
-    // UPDATE SINKRONISASI EKSPOR TO EXCEL KEDUA KETERANGAN
-    // =====================================================
     function exportKeExcelLaporan() {
       if (dataLaporanSekarang.length === 0) { alert("Tidak ada data laporan aktif!"); return; }
       const tipeFilter = document.getElementById("filterType").value.toUpperCase();
